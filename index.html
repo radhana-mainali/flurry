@@ -26,103 +26,178 @@
   <p id="status"></p>
   <div id="frames"></div>
 
-  <script>
-    const upload = document.getElementById("upload");
-    const status = document.getElementById("status");
-    const output = document.getElementById("frames");
-
-    upload.onchange = async () => {
-      const file = upload.files[0];
-      if (!file) return;
-
-      output.innerHTML = "";
-      status.textContent = "Processing video...";
-
-      const video = document.createElement("video");
-      video.muted = true;
-      video.preload = "auto";
-
-      const url = URL.createObjectURL(file);
-      video.src = url;
-
-      try {
-        await new Promise((resolve, reject) => {
-          video.onloadedmetadata = resolve;
-          video.onerror = () => reject(new Error("Cannot load video"));
-        });
-
-        const canvas = document.createElement("canvas");
-        canvas.width = 320;
-        canvas.height = Math.round(
-          320 * video.videoHeight / video.videoWidth
-        );
-        const ctx = canvas.getContext("2d", {
-          willReadFrequently: true
-        });
-
-        const candidates = [];
-        const duration = video.duration;
-
-        if (!Number.isFinite(duration) || duration <= 0) {
-          throw new Error("Invalid video duration");
+ 
+    <script>
+      const upload = document.getElementById("upload");
+      const status = document.getElementById("status");
+      const output = document.getElementById("frames");
+    
+      function sharpness(ctx, width, height) {
+        const pixels = ctx.getImageData(0, 0, width, height).data;
+        const gray = new Float32Array(width * height);
+    
+        for (let i = 0; i < gray.length; i++) {
+          const p = i * 4;
+          gray[i] = 0.299 * pixels[p] +
+                    0.587 * pixels[p + 1] +
+                    0.114 * pixels[p + 2];
         }
-
-        for (let i = 0; i < 15; i++) {
-          const time = duration * (i + 1) / 16;
-
-          await new Promise((resolve, reject) => {
-            video.onseeked = resolve;
-            video.onerror = () => reject(new Error("Seek failed"));
-            video.currentTime = time;
-          });
-
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-          const pixels = ctx.getImageData(
-            0, 0, canvas.width, canvas.height
-          ).data;
-
-          let score = 0;
-          for (let j = 0; j < pixels.length - 4; j += 16) {
-            score += Math.abs(pixels[j] - pixels[j + 4]);
+    
+        let sum = 0;
+        let sumSquares = 0;
+        let count = 0;
+    
+        for (let y = 1; y < height - 1; y++) {
+          for (let x = 1; x < width - 1; x++) {
+            const i = y * width + x;
+    
+            const value =
+              4 * gray[i] -
+              gray[i - 1] -
+              gray[i + 1] -
+              gray[i - width] -
+              gray[i + width];
+    
+            sum += value;
+            sumSquares += value * value;
+            count++;
           }
-
-          candidates.push({
-            time,
-            score,
-            image: canvas.toDataURL("image/jpeg")
-          });
         }
-
-        candidates.sort((a, b) => b.score - a.score);
-
-        const selected = [];
-        for (const frame of candidates) {
-          if (selected.every(
-            other => Math.abs(other.time - frame.time) >= duration * 0.15
-          )) {
-            selected.push(frame);
-          }
-          if (selected.length === 3) break;
-        }
-
-        selected.sort((a, b) => a.time - b.time);
-
-        selected.forEach(frame => {
-          const img = document.createElement("img");
-          img.src = frame.image;
-          img.width = 250;
-          output.appendChild(img);
-        });
-
-        status.textContent = "Done!";
-
-      } catch (err) {
-        status.textContent = err.message;
-      } finally {
-        URL.revokeObjectURL(url);
+    
+        const mean = sum / count;
+        return sumSquares / count - mean * mean;
       }
-    };
-  </script>
+    
+      upload.onchange = async () => {
+        const file = upload.files[0];
+        if (!file) return;
+    
+        output.innerHTML = "";
+        status.textContent = "Processing video...";
+        upload.disabled = true;
+    
+        const video = document.createElement("video");
+        video.muted = true;
+        video.playsInline = true;
+        video.preload = "auto";
+    
+        const url = URL.createObjectURL(file);
+    
+        try {
+          video.src = url;
+    
+          await new Promise((resolve, reject) => {
+            video.onloadedmetadata = resolve;
+            video.onerror = () =>
+              reject(new Error("Cannot load video"));
+          });
+    
+          const duration = video.duration;
+          const width = video.videoWidth;
+          const height = video.videoHeight;
+    
+          if (!Number.isFinite(duration) ||
+              duration <= 0 || !width || !height) {
+            throw new Error("Invalid video");
+          }
+    
+          // Find the largest centered square
+          const squareSize = Math.min(width, height);
+          const cropX = (width - squareSize) / 2;
+          const cropY = (height - squareSize) / 2;
+    
+          // Low-resolution canvas for sharpness scoring
+          const scoreCanvas = document.createElement("canvas");
+          scoreCanvas.width = 256;
+          scoreCanvas.height = 256;
+    
+          const scoreCtx = scoreCanvas.getContext("2d", {
+            willReadFrequently: true
+          });
+    
+          // Full-resolution canvas for final images
+          const fullCanvas = document.createElement("canvas");
+          fullCanvas.width = squareSize;
+          fullCanvas.height = squareSize;
+    
+          const fullCtx = fullCanvas.getContext("2d");
+    
+          function drawSquare(ctx, canvas) {
+            ctx.drawImage(
+              video,
+              cropX, cropY,
+              squareSize, squareSize,
+              0, 0,
+              canvas.width, canvas.height
+            );
+          }
+    
+          function seek(time) {
+            return new Promise((resolve, reject) => {
+              video.onseeked = resolve;
+              video.onerror = () =>
+                reject(new Error("Could not seek video"));
+              video.currentTime = time;
+            });
+          }
+    
+          const candidates = [];
+    
+          // Analyze 15 frames
+          for (let i = 0; i < 15; i++) {
+            const time = duration * (i + 1) / 16;
+    
+            await seek(time);
+            drawSquare(scoreCtx, scoreCanvas);
+    
+            candidates.push({
+              time,
+              score: sharpness(scoreCtx, 256, 256)
+            });
+          }
+    
+          // Sort by sharpness
+          candidates.sort((a, b) => b.score - a.score);
+    
+          const selected = [];
+    
+          // Select 3 frames separated in time
+          for (const frame of candidates) {
+            if (selected.every(other =>
+              Math.abs(other.time - frame.time) >=
+              duration * 0.15
+            )) {
+              selected.push(frame);
+            }
+    
+            if (selected.length === 3) break;
+          }
+    
+          selected.sort((a, b) => a.time - b.time);
+    
+          // Extract final images at full resolution
+          for (const frame of selected) {
+            await seek(frame.time);
+            drawSquare(fullCtx, fullCanvas);
+    
+            const img = document.createElement("img");
+            img.src = fullCanvas.toDataURL("image/png");
+            img.width = 250;
+            img.height = 250;
+    
+            output.appendChild(img);
+          }
+    
+          status.textContent = "Done!";
+    
+        } catch (error) {
+          console.error(error);
+          status.textContent = error.message;
+        } finally {
+          upload.disabled = false;
+          URL.revokeObjectURL(url);
+        }
+      };
+    </script>
 </body>
 </html>
