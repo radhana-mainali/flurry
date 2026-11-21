@@ -1,13 +1,109 @@
-<DOCTYPE>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>My Website</title>
-    </head>
-    <body>
-        <h1>Welcome to My Website</h1>
-        <p>This is a sample HTML page.</p>
-    </body>
-    </html>
-</DOCTYPE>
+
+<!DOCTYPE html>
+<html>
+<body>
+  <h1>Flurry</h1>
+  <input type="file" id="upload" accept="video/*,.mov">
+  <p id="status"></p>
+  <div id="frames"></div>
+
+  <script>
+    const upload = document.getElementById("upload");
+    const status = document.getElementById("status");
+    const output = document.getElementById("frames");
+
+    upload.onchange = async () => {
+      const file = upload.files[0];
+      if (!file) return;
+
+      output.innerHTML = "";
+      status.textContent = "Processing video...";
+
+      const video = document.createElement("video");
+      video.muted = true;
+      video.preload = "auto";
+
+      const url = URL.createObjectURL(file);
+      video.src = url;
+
+      try {
+        await new Promise((resolve, reject) => {
+          video.onloadedmetadata = resolve;
+          video.onerror = () => reject(new Error("Cannot load video"));
+        });
+
+        const canvas = document.createElement("canvas");
+        canvas.width = 320;
+        canvas.height = Math.round(
+          320 * video.videoHeight / video.videoWidth
+        );
+        const ctx = canvas.getContext("2d", {
+          willReadFrequently: true
+        });
+
+        const candidates = [];
+        const duration = video.duration;
+
+        if (!Number.isFinite(duration) || duration <= 0) {
+          throw new Error("Invalid video duration");
+        }
+
+        for (let i = 0; i < 15; i++) {
+          const time = duration * (i + 1) / 16;
+
+          await new Promise((resolve, reject) => {
+            video.onseeked = resolve;
+            video.onerror = () => reject(new Error("Seek failed"));
+            video.currentTime = time;
+          });
+
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          const pixels = ctx.getImageData(
+            0, 0, canvas.width, canvas.height
+          ).data;
+
+          let score = 0;
+          for (let j = 0; j < pixels.length - 4; j += 16) {
+            score += Math.abs(pixels[j] - pixels[j + 4]);
+          }
+
+          candidates.push({
+            time,
+            score,
+            image: canvas.toDataURL("image/jpeg")
+          });
+        }
+
+        candidates.sort((a, b) => b.score - a.score);
+
+        const selected = [];
+        for (const frame of candidates) {
+          if (selected.every(
+            other => Math.abs(other.time - frame.time) >= duration * 0.15
+          )) {
+            selected.push(frame);
+          }
+          if (selected.length === 3) break;
+        }
+
+        selected.sort((a, b) => a.time - b.time);
+
+        selected.forEach(frame => {
+          const img = document.createElement("img");
+          img.src = frame.image;
+          img.width = 250;
+          output.appendChild(img);
+        });
+
+        status.textContent = "Done!";
+
+      } catch (err) {
+        status.textContent = err.message;
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    };
+  </script>
+</body>
+</html>
