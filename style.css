@@ -1,0 +1,15 @@
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1;
+}
+
+.kranky-regular {
+    font-family: "Kranky", serif;
+    font-weight: 400;
+    font-style: normal;
+}
