@@ -86,7 +86,7 @@ function seek(video, time) {
     const timer = setTimeout(() => {
       cleanup();
       reject(new Error("unsupported"));
-    }, 10000);
+    }, 20000);
 
     const onSeeked = () => {
       cleanup();
@@ -171,7 +171,7 @@ async function processVideo() {
     await new Promise((resolve, reject) => {
       video.onloadedmetadata = resolve;
       video.onerror = () => reject(new Error("unsupported"));
-      setTimeout(() => reject(new Error("unsupported")), 15000);
+      setTimeout(() => reject(new Error("unsupported")), 30000);
     });
 
     // Recorded WebM files often don't know their length until the end is read
@@ -254,8 +254,11 @@ async function processVideo() {
   } catch (error) {
     console.error(error);
     stage = "idle";
+    if (video.error) {
+      console.warn("Video error", video.error.code, video.error.message, file.type, file.name);
+    }
     status.textContent = error.message === "unsupported"
-      ? "Hmm, this browser can't open that video. Try an MP4, or another video!"
+      ? "Hmm, this browser can't play that video's format (iPhone HDR videos often need Safari). Try opening Flurry in Safari, or pick a different video!"
       : "Something went wrong reading that video. Try again?";
 
   } finally {
