@@ -12,11 +12,33 @@
     h1 {
       font-family: 'Kranky', serif;
     }
-
+    
     body {
       font-family: 'Crafty Girls', cursive;
+      background-color: #def7ff;
     }
-
+    
+    /* Snowflakes */
+    .snowflake {
+      position: fixed;
+      top: -10px;
+      background: white;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 100;
+      animation: snowfall linear infinite;
+    }
+    
+    @keyframes snowfall {
+      from {
+        transform: translateY(0);
+      }
+      to {
+        transform: translateY(110vh);
+      }
+    }
+    
+    /* Keep your photo selection styling */
     .photo {
       width: 180px;
       height: 180px;
@@ -25,11 +47,11 @@
       margin: 5px;
       border: 4px solid transparent;
     }
-
+    
     .photo.selected {
       border-color: dodgerblue;
     }
-
+    
     #gallery, #finalFrames {
       display: flex;
       flex-wrap: wrap;
