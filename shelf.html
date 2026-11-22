@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,7 +25,7 @@
 
     <!-- Custom My Shelf title image -->
     <img
-      src="./images/myshelf.png"
+      src="./images/trimmed/myshelf.png"
       alt="My Shelf"
       class="shelf-title"
     >
@@ -45,7 +44,7 @@
     <div class="shelf-stage">
 
       <img
-        src="./images/shelf.png"
+        src="./images/trimmed/shelf.png"
         alt="Wooden shelves"
         class="shelf-art"
       >
@@ -55,15 +54,19 @@
       <div id="shelfRow2" class="shelf-row row-2"></div>
       <div id="shelfRow3" class="shelf-row row-3"></div>
 
+      <p id="emptyMessage" class="shelf-note" hidden>
+        Your shelf is empty!<br>
+        <a href="./index.html">Freeze your first moment ❄️</a>
+      </p>
+
     </div>
 
-    <p id="emptyMessage" hidden>
-      Your shelf is empty! Create your first snow globe.
-    </p>
-
-    <p id="fullMessage" hidden>
-      Your shelf is full! ❄️
-    </p>
+    <!-- More than 9 globes: flip between shelves -->
+    <nav id="shelfPager" class="shelf-pager" hidden>
+      <button id="prevShelf" class="pager-link">&larr; previous shelf</button>
+      <span id="pageLabel"></span>
+      <button id="nextShelf" class="pager-link">next shelf &rarr;</button>
+    </nav>
 
   </main>
 
@@ -73,117 +76,11 @@
 
     <img id="largeGlobe" alt="Saved snow globe">
 
-    <p id="memoryDate" style="color: white;"></p>
+    <p id="memoryDate" class="memory-date"></p>
   </div>
 
-  <script>
-    const rows = [
-      document.getElementById("shelfRow1"),
-      document.getElementById("shelfRow2"),
-      document.getElementById("shelfRow3")
-    ];
-
-    const viewer = document.getElementById("memoryViewer");
-    const largeGlobe = document.getElementById("largeGlobe");
-    const memoryDate = document.getElementById("memoryDate");
-
-    let memories = [];
-
-    function loadMemories() {
-      try {
-        memories = JSON.parse(
-          localStorage.getItem("flurryMemories") || "[]"
-        );
-
-        if (!Array.isArray(memories)) {
-          memories = [];
-        }
-      } catch (error) {
-        console.error(error);
-        memories = [];
-      }
-    }
-
-    function openMemory(memory) {
-      largeGlobe.src = memory.image;
-
-      memoryDate.textContent = memory.createdAt
-        ? new Date(memory.createdAt).toLocaleDateString()
-        : "";
-
-      viewer.hidden = false;
-    }
-
-    function displayShelf() {
-      // Clear all rows before updating
-      rows.forEach(row => row.innerHTML = "");
-
-      document.getElementById("emptyMessage").hidden =
-        memories.length !== 0;
-
-      document.getElementById("fullMessage").hidden =
-        memories.length <= 9;
-
-      memories.slice(0, 9).forEach((memory, index) => {
-        // 0,1,2 -> first shelf
-        // 3,4,5 -> second shelf
-        // 6,7,8 -> third shelf
-        const rowIndex = Math.floor(index / 3);
-
-        const img = document.createElement("img");
-        img.src = memory.image;
-        img.alt = "Saved snow globe " + (index + 1);
-        img.className = "saved-globe";
-        img.tabIndex = 0;
-        img.setAttribute("role", "button");
-
-        img.onclick = () => openMemory(memory);
-
-        img.onkeydown = event => {
-          if (event.key === "Enter" ||
-              event.key === " ") {
-            event.preventDefault();
-            openMemory(memory);
-          }
-        };
-
-        rows[rowIndex].appendChild(img);
-      });
-    }
-
-    // Reset all saved snow globes
-    document.getElementById("resetShelf").onclick = () => {
-      const confirmed = confirm(
-        "Delete all saved snow globes? This cannot be undone."
-      );
-
-      if (!confirmed) return;
-
-      localStorage.removeItem("flurryMemories");
-
-      memories = [];
-      viewer.hidden = true;
-      displayShelf();
-    };
-
-    document.getElementById("closeViewer").onclick = () => {
-      viewer.hidden = true;
-    };
-
-    viewer.onclick = event => {
-      if (event.target === viewer) {
-        viewer.hidden = true;
-      }
-    };
-
-    document.addEventListener("keydown", event => {
-      if (event.key === "Escape") {
-        viewer.hidden = true;
-      }
-    });
-
-    loadMemories();
-    displayShelf();
-  </script>
+  <script src="./js/flurry-globe.js"></script>
+  <script src="./js/flurry-store.js"></script>
+  <script src="./js/shelf.js"></script>
 </body>
 </html>

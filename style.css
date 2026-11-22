@@ -3,7 +3,8 @@
 
 @font-face {
   font-family: 'TypewriterInked';
-  src: url('./fonts/TypewriterInked.ttf') format('truetype');
+  src: url('./fonts/TypewriterInkedRegular-lgwPZ.ttf') format('truetype');
+  font-display: swap;
 }
 
 .kranky-regular {
@@ -42,7 +43,7 @@ body {
 
   background-attachment: fixed;
 
-  cursor: url('./images/wand.png') 0 0, auto;
+  cursor: url('./images/cursors/wand.png') 40 8, auto;
 }
 
 main {
@@ -69,8 +70,9 @@ input,
 label,
 .globe-click,
 #gallery .photo,
-.saved-globe {
-  cursor: url('./images/mitten.png') 0 0, pointer;
+.saved-globe,
+.pager-link {
+  cursor: url('./images/cursors/mitten.png') 12 2, pointer;
 }
 
 button:disabled {
@@ -93,12 +95,12 @@ select {
 /* Bigger logo at top */
 
 .site-title {
-  width: 360px;
+  width: 340px;
   max-width: 75vw;
   height: auto;
 
   display: block;
-  margin: 0 auto 2px;
+  margin: 4px auto 2px;
 }
 
 /* Shelf button directly below logo */
@@ -130,7 +132,7 @@ select {
 /* Tagline */
 
 .tagline {
-  margin: 8px 0 5px;
+  margin: 6px 0 4px;
   font-size: 17px;
 }
 
@@ -140,8 +142,9 @@ select {
 .globe {
   position: relative;
 
-  width: min(44vh, 410px, 80vw);
-  aspect-ratio: 830 / 961;
+  width: min(410px, 80vw, calc((100dvh - 290px) * 956 / 1107));
+  min-width: 200px;
+  aspect-ratio: 956 / 1107;
 
   margin: 0 auto;
   overflow: hidden;
@@ -160,12 +163,13 @@ select {
 .globe-art {
   position: absolute;
 
-  width: 246.75%;
-  height: auto;
-  max-width: none;
+  /* images/trimmed/snowglobe.png is the globe cropped from
+     snowglobe-template.png exactly where the old CSS crop showed it */
+  width: 100%;
+  height: 100%;
 
-  left: -71.57%;
-  top: -22.58%;
+  left: 0;
+  top: 0;
 
   z-index: 2;
   pointer-events: none;
@@ -393,17 +397,17 @@ body:has(#selectionArea:not([hidden])) .globe {
 /* MY SHELF PAGE */
 
 .shelf-page {
-  padding: 8px 15px;
+  padding: 6px 15px;
   gap: 4px;
 }
 
-/* Custom title image */
+/* Custom title image (trimmed copy of images/myshelf.png) */
 .shelf-title {
-  width: 320px;
+  width: 300px;
   max-width: 75vw;
   height: auto;
   display: block;
-  margin: 4px auto;
+  margin: 2px auto 0;
 }
 
 /* Navigation and reset buttons */
@@ -412,21 +416,29 @@ body:has(#selectionArea:not([hidden])) .globe {
   justify-content: center;
   align-items: center;
   gap: 10px;
-  margin: 4px auto;
+  margin: 2px auto;
 }
 
 .shelf-actions .shelf-button {
   margin: 0;
   padding: 7px 15px;
   font-size: 14px;
-  cursor: pointer;
 }
 
-/* Shelf image and globe overlay */
+/* Shelf image and globe overlay.
+   Sized by the screen height so all three planks fit without scrolling;
+   1038 / 1216 is the trimmed shelf drawing's aspect ratio. */
 .shelf-stage {
+  --shelf-ratio: calc(1038 / 1216);
   position: relative;
-  width: min(900px, 94vw, 75vh);
-  margin: 8px auto;
+  width: min(760px, 94vw, calc((100dvh - 135px) * var(--shelf-ratio)));
+  min-width: min(300px, 94vw);
+  margin: 6px auto 0;
+}
+
+/* Leave room for the "next shelf" links when there are more than 9 globes */
+.shelf-page:has(.shelf-pager:not([hidden])) .shelf-stage {
+  width: min(760px, 94vw, calc((100dvh - 172px) * var(--shelf-ratio)));
 }
 
 /* Original shelf image, without cropping */
@@ -434,49 +446,94 @@ body:has(#selectionArea:not([hidden])) .globe {
   display: block;
   width: 100%;
   height: auto;
+  pointer-events: none;
 }
 
-/* Shared positioning for all three rows */
+/* One row per plank. The bottom of each row is the top edge of its
+   plank, measured from images/trimmed/shelf.png (24.3%, 58.4%, 93.7%),
+   nudged down a hair so the globe bases sit on the wood. */
 .shelf-row {
   position: absolute;
-  left: 12%;
-  width: 76%;
+  left: 11%;
+  width: 78%;
   height: 23%;
 
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  gap: 3%;
+  gap: 4%;
 }
 
-/* Each row ends at its wooden plank */
 .row-1 {
-  top: 1%;
+  bottom: calc(100% - 24.34% - 0.4%);
 }
 
 .row-2 {
-  top: 35%;
+  bottom: calc(100% - 58.39% - 0.4%);
 }
 
 .row-3 {
-  top: 69%;
+  bottom: calc(100% - 93.67% - 0.4%);
 }
 
 /* Miniature snow globes */
 .shelf-row .saved-globe {
   width: auto;
   height: 100%;
-  max-width: 30%;
-  max-height: 100%;
+  max-width: 31%;
   object-fit: contain;
+  object-position: bottom;
   flex-shrink: 1;
 
-  cursor: pointer;
+  transform-origin: bottom center;
   transition: transform 0.2s ease;
 }
 
-.shelf-row .saved-globe:hover {
-  transform: scale(1.08);
+.shelf-row .saved-globe:hover,
+.shelf-row .saved-globe:focus-visible {
+  transform: scale(1.08) rotate(-2deg);
+  outline: none;
+}
+
+/* Empty shelf note, sitting above the top plank */
+.shelf-note {
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: calc(100% - 24.34% + 4%);
+  margin: 0;
+  font-size: 17px;
+  color: #4b6478;
+}
+
+.shelf-note a {
+  color: #d16f9f;
+}
+
+/* More than 9 globes: handwritten page links */
+.shelf-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 2px auto;
+  font-size: 15px;
+  color: #4b6478;
+}
+
+.pager-link {
+  padding: 2px 4px;
+  border: none;
+  background: none;
+  color: #4b6478;
+  font-size: 15px;
+  text-decoration: underline wavy #f4a6c8;
+  text-underline-offset: 5px;
+}
+
+.pager-link:disabled {
+  opacity: 0.35;
+  text-decoration: none;
 }
 
 /* Full-screen enlarged memory */
@@ -494,9 +551,8 @@ body:has(#selectionArea:not([hidden])) .globe {
 }
 
 .memory-viewer img {
-  width: min(550px, 85vw);
-  max-height: 75vh;
-  object-fit: contain;
+  width: min(480px, 85vw, calc((100dvh - 160px) * 956 / 1107));
+  height: auto;
 }
 
 .memory-viewer button {
@@ -505,12 +561,19 @@ body:has(#selectionArea:not([hidden])) .globe {
   border: 2px solid white;
   border-radius: 12px;
   background: #b8d9ee;
+  color: #4b6478;
+}
+
+.memory-date {
+  margin: 10px 0 0;
+  color: white;
+  font-size: 17px;
 }
 
 /* Mobile */
 @media (max-width: 600px) {
   .shelf-title {
-    width: 240px;
+    width: 220px;
   }
 
   .shelf-stage {
@@ -532,11 +595,7 @@ body:has(#selectionArea:not([hidden])) .globe {
 
 @media (max-height: 750px) {
   .site-title {
-    width: 300px;
-  }
-
-  .globe {
-    width: min(38vh, 340px, 75vw);
+    width: 280px;
   }
 
   body:has(#selectionArea:not([hidden])) .globe {
@@ -545,10 +604,6 @@ body:has(#selectionArea:not([hidden])) .globe {
 
   #gallery {
     max-width: 480px;
-  }
-
-  .shelf-container {
-    height: min(60vh, 520px);
   }
 }
 
@@ -578,22 +633,6 @@ body:has(#selectionArea:not([hidden])) .globe {
 
   .rotation-controls {
     flex-wrap: wrap;
-  }
-
-  .shelf-container {
-    width: 96vw;
-    height: 350px;
-  }
-
-  .shelf-items {
-    left: 10%;
-    right: 10%;
-    gap: 7px;
-  }
-
-  .saved-globe {
-    width: 70px;
-    max-width: 24%;
   }
 }
 
