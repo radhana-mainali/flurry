@@ -397,3 +397,22 @@ select {
 body {
     cursor: pointer;
 }
+
+body {
+    background-color: #dceefa; /* Your existing background color */
+    margin: 0;
+    text-align: center;
+}
+
+/* Shelf area */
+.shelf-container {
+    width: 100%;
+    min-height: 500px;
+
+    background-image: url("./images/shelf.png");
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-size: contain;
+
+    position: relative;
+}
