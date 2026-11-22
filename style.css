@@ -44,9 +44,43 @@ body {
     cursor: pointer;
 }
 
-.snowglobe-image {
-    width: 300px;
+/* Main title */
+.site-title {
+    width: 200px;
     max-width: 80%;
     height: auto;
     display: block;
+    margin: 20px auto;
+}
+
+/* Snowglobe button */
+.snowglobe-button {
+    display: block;
+    margin: 10px auto;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+/* Snowglobe image */
+.snowglobe-image {
+    width: 180px;
+    max-width: 65vw;
+    height: auto;
+    display: block;
+    margin: auto;
+    transition: transform 0.3s ease;
+}
+
+/* Hover effect */
+.snowglobe-button:hover .snowglobe-image {
+    transform: scale(1.04);
+}
+
+/* Keep the page organized */
+body {
+    margin: 0;
+    text-align: center;
+    background-color: #def7ff;
 }
