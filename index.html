@@ -24,10 +24,14 @@
 
     <!-- Shelf button directly under title -->
     <a href="./shelf.html" class="shelf-button">
-      My Shelf ❄️
+      My Shelf
     </a>
 
     <p class="tagline">Freeze your favorite moments.</p>
+
+    <!-- The globe, with the 10 moments (and later the stickers)
+         floating around it -->
+    <div class="globe-stage" id="globeStage">
 
     <!-- Interactive snow globe -->
     <div class="globe" id="globe">
@@ -67,6 +71,14 @@
 
     </div>
 
+      <!-- 10 suggested moments float around the globe: pick 3 -->
+      <div id="gallery" class="float-ring" hidden></div>
+
+      <!-- The team's stickers float around the globe: peel one off -->
+      <div id="stickerTray" class="float-ring sticker-ring" hidden
+           aria-label="Stickers"></div>
+    </div>
+
     <!-- Hidden video upload -->
     <input
       type="file"
@@ -90,39 +102,31 @@
 
     <!-- Select 3 of 10 suggested frames -->
     <div id="selectionArea" hidden>
-      <h2>Choose your 3 favorite moments!</h2>
-      <p id="counter">0 / 3 selected</p>
-
-      <div id="gallery"></div>
-
+      <span id="counter">0 / 3 picked</span>
       <button id="done" disabled>Done!</button>
     </div>
 
     <!-- Completed snow globe actions -->
     <div id="finalArea" hidden>
 
-      <!-- Decorate: the team's hand-drawn stickers -->
-      <div class="decorate-row sticker-tray" id="stickerTray">
-        <span class="row-label">add a sticker:</span>
-      </div>
-
+      <!-- A label on pink tape: the date to start with, but you can
+           write anything -->
       <div class="decorate-row">
         <label class="date-toggle">
           <input type="checkbox" id="dateOn" checked>
-          date stamp
+          add a label
         </label>
-        <input type="text" id="dateText" maxlength="20"
-               aria-label="Date stamp text" spellcheck="false">
+        <input type="text" id="dateText" maxlength="22"
+               aria-label="Label text" spellcheck="false">
       </div>
 
       <div class="decorate-row">
-        <button id="shakeButton" class="soft-button">Shake ❄️</button>
-        <button id="soundButton" class="soft-button" aria-pressed="false">mute sound</button>
-        <button id="saveSnowglobe" class="soft-button">Save to My Shelf ❄️</button>
+        <button id="shakeButton" class="soft-button">Shake</button>
+        <button id="saveSnowglobe" class="soft-button">Save to My Shelf</button>
         <button id="back" class="soft-button">Choose Again</button>
       </div>
 
-      <p class="hint" id="shakeHint">psst... drag the globe side to side to shake it!</p>
+      <p class="hint" id="shakeHint">peel a sticker onto the globe, or drag the globe side to side to shake it!</p>
     </div>
   </main>
 

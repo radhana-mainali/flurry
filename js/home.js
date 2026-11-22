@@ -27,7 +27,7 @@ let selected = [];
 let processing = false;
 let currentFile = null;
 let videoDuration = 0;
-let stage = "idle"; // idle | choosing | finished
+let stage_ = "idle"; // idle | choosing | finished
 let videoUrl = null;     // kept for shake-to-replay before saving
 let recordedOn = null;   // recording date from the file, if believable
 
@@ -35,7 +35,7 @@ const FRAME_SIZE = 1080; // max saved photo size in pixels
 
 // Click globe to open file picker (only before a globe is finished)
 globeButton.onclick = () => {
-  if (processing || stage === "finished") return;
+  if (processing || stage_ === "finished") return;
   upload.click();
 };
 
@@ -158,9 +158,14 @@ async function processVideo() {
   clearDecorations();
 
   gallery.innerHTML = "";
+  gallery.hidden = true;
+  stickerTray.hidden = true;
   selectionArea.hidden = true;
   finalArea.hidden = true;
+  stage.dataset.state = "idle";
+  stage_ = "idle";
   updateGlobe();
+  layoutFloaters();
 
   status.textContent = "Finding your best moments...";
 
@@ -253,14 +258,15 @@ async function processVideo() {
     videoDuration = duration;
     recordedOn = await Flurry.readRecordingDate(file);
 
-    displayGallery();
-    stage = "choosing";
+    stage.dataset.state = "choosing";
+    stage_ = "choosing";
     selectionArea.hidden = false;
-    status.textContent = "Pick your favorite 3!";
+    displayGallery();
+    status.textContent = "Pick your 3 favorite moments!";
 
   } catch (error) {
     console.error(error);
-    stage = "idle";
+    stage_ = "idle";
     if (video.error) {
       console.warn("Video error", video.error.code, video.error.message, file.type, file.name);
     }
@@ -278,29 +284,111 @@ async function processVideo() {
   }
 }
 
-// Display 10 image choices
+// ---------- things floating around the globe ----------
+
+const stage = document.getElementById("globeStage");
+const narrowScreen = matchMedia("(max-width: 640px)");
+
+// Lay items out in two loose columns either side of the globe, like
+// ( globe ). Ten frames on a wide screen go in two columns per side
+// (3 + 2, staggered) so they can be bigger.
+function layoutRing(ring, maxSize) {
+  if (ring.hidden) return;
+  const items = [...ring.children];
+  if (!items.length) return;
+
+  const sw = stage.clientWidth;
+  const gw = globe.offsetWidth;
+  const gh = globe.offsetHeight;
+  const side = (sw - gw) / 2;
+  const per = Math.ceil(items.length / 2);
+  const room = Math.max(gh, narrowScreen.matches ? innerHeight * 0.58 : 0);
+
+  // [column, row] slots for one side, in "item size" units
+  const single = Array.from({ length: per }, (_, i) => [0, i - (per - 1) / 2]);
+  const sizeSingle = Math.min(maxSize, side - 14, room / (per * 1.12));
+
+  let slots = single;
+  let size = sizeSingle;
+  if (per === 5) {
+    const stagger = [[0, -0.56], [0, 0.56], [0.98, -1.12], [0.98, 0], [0.98, 1.12]];
+    const sizeStagger = Math.min(maxSize, (side - 16) / 1.98, room / (3.24 * 1.12));
+    if (sizeStagger > sizeSingle) {
+      slots = stagger;
+      size = sizeStagger;
+    }
+  }
+  size = Math.max(38, Math.floor(size));
+
+  const rows = slots.map(s => s[1]);
+  const span = (Math.max(...rows) - Math.min(...rows) + 1) * size * 1.12;
+  const height = Math.max(gh, span);
+  stage.style.height = height + "px";
+
+  // top-to-bottom on the left, then top-to-bottom on the right
+  const order = slots.slice().sort((a, b) => a[1] - b[1] || a[0] - b[0]);
+  items.forEach((item, i) => {
+    const left = i < per;
+    const [col, row] = order[left ? i : i - per] || [0, 0];
+    // curve in a little at the top and bottom, like brackets round the globe
+    const curve = slots === single ? -0.18 * row * row : 0;
+    const dx = gw / 2 + 10 + size / 2 + (col + curve) * size;
+    const x = sw / 2 + (left ? -dx : dx);
+    const y = height / 2 + row * size * 1.12;
+    item.style.width = item.style.height = size + "px";
+    item.style.left = (x - size / 2) + "px";
+    item.style.top = (y - size / 2) + "px";
+  });
+}
+
+function layoutFloaters() {
+  layoutRing(gallery, 132);
+  layoutRing(stickerTray, 104);
+  if (gallery.hidden && stickerTray.hidden) stage.style.height = "";
+}
+
+window.addEventListener("resize", layoutFloaters);
+if (window.ResizeObserver) new ResizeObserver(layoutFloaters).observe(globe);
+
+function floatItem(className) {
+  const item = document.createElement("button");
+  item.type = "button";
+  item.className = "float-item " + className;
+  // each one bobs gently at its own pace and tilt
+  item.style.setProperty("--tilt", ((Math.random() - 0.5) * 14).toFixed(1) + "deg");
+  item.style.setProperty("--bob-delay", (-Math.random() * 4).toFixed(2) + "s");
+  item.style.setProperty("--bob-time", (3.4 + Math.random() * 1.6).toFixed(2) + "s");
+  const bob = document.createElement("span");
+  bob.className = "float-bob";
+  item.appendChild(bob);
+  return { item, bob };
+}
+
+// Display 10 image choices floating round the globe
 function displayGallery() {
   gallery.innerHTML = "";
   candidates.forEach((frame, index) => {
+    const { item, bob } = floatItem("float-frame");
+    item.setAttribute("aria-label", "Moment " + (index + 1));
     const img = document.createElement("img");
     img.src = frame.url;
-    img.alt = "Moment " + (index + 1);
+    img.alt = "";
     img.className = "photo";
-    img.tabIndex = 0;
-    img.onclick = () => toggleFrame(index);
-    img.onkeydown = event => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        toggleFrame(index);
-      }
-    };
-    gallery.appendChild(img);
+    img.draggable = false;
+    const badge = document.createElement("span");
+    badge.className = "pick-badge";
+    bob.append(img, badge);
+    item.onclick = () => toggleFrame(index);
+    gallery.appendChild(item);
   });
+  gallery.hidden = false;
+  layoutFloaters();
   updateSelection();
 }
 
 // Select or deselect a photo
 function toggleFrame(index) {
+  if (stage.dataset.busy) return;
   if (selected.includes(index)) {
     selected = selected.filter(i => i !== index);
   } else {
@@ -308,14 +396,13 @@ function toggleFrame(index) {
     selected.push(index);
   }
   updateSelection();
-  updateGlobe();
 }
 
-// Put three selected images in globe holes
+// The photos sit in the globe's openings only once they're frozen in
 function updateGlobe() {
   holes.forEach((hole, i) => {
     const frame = candidates[selected[i]];
-    if (i < selected.length && frame) {
+    if (stage.dataset.state === "finished" && frame) {
       hole.src = frame.url;
       hole.style.display = "block";
     } else {
@@ -325,25 +412,113 @@ function updateGlobe() {
   });
 }
 
-// Update selected borders and Done button
+// Update selected glow, numbers and Done button
 function updateSelection() {
-  gallery.querySelectorAll("img").forEach((img, index) => {
-    img.classList.toggle("selected", selected.includes(index));
-    img.setAttribute("aria-pressed", selected.includes(index));
+  [...gallery.children].forEach((item, index) => {
+    const pick = selected.indexOf(index);
+    item.classList.toggle("selected", pick >= 0);
+    item.setAttribute("aria-pressed", String(pick >= 0));
+    item.querySelector(".pick-badge").textContent = pick >= 0 ? pick + 1 : "";
   });
-  counter.textContent = selected.length + " / 3 selected";
+  counter.textContent = selected.length + " / 3 picked";
   done.disabled = selected.length !== 3;
 }
 
-// Finish selecting photos -> decorate & shake
-done.onclick = () => {
-  if (selected.length !== 3) return;
+// ---------- photos flying into (and out of) the globe ----------
+
+// Where an opening is on screen
+function holeBox(i) {
+  const g = globe.getBoundingClientRect();
+  const h = Flurry.GLOBE.holes[i];
+  return {
+    x: g.left + (h.left + h.width / 2) * g.width,
+    y: g.top + (h.top + h.height / 2) * g.height,
+    size: h.width * g.width,
+    rotate: h.rotate
+  };
+}
+
+function itemBox(item) {
+  const r = item.getBoundingClientRect();
+  return {
+    x: r.left + r.width / 2,
+    y: r.top + r.height / 2,
+    size: r.width,
+    rotate: parseFloat(item.style.getPropertyValue("--tilt")) || 0
+  };
+}
+
+// Float a copy of a photo from one place to another
+function flyPhoto(src, from, to, delay) {
+  const img = document.createElement("img");
+  img.src = src;
+  img.alt = "";
+  img.className = "flying-photo";
+  Object.assign(img.style, {
+    left: (to.x - to.size / 2) + "px",
+    top: (to.y - to.size / 2) + "px",
+    width: to.size + "px",
+    height: to.size + "px"
+  });
+  document.body.appendChild(img);
+
+  const k = from.size / to.size;
+  const dx = from.x - to.x;
+  const dy = from.y - to.y;
+  const lift = Math.min(90, Math.hypot(dx, dy) * 0.3);
+  const ms = reducedMotion ? 10 : 900;
+  const anim = img.animate([
+    { transform: `translate(${dx}px, ${dy}px) rotate(${from.rotate}deg) scale(${k})`, opacity: 1 },
+    { transform: `translate(${dx * 0.45}px, ${dy * 0.45 - lift}px) rotate(${(from.rotate + to.rotate) / 2 + 8}deg) scale(${(k + 1) / 2 * 1.08})`, opacity: 1, offset: 0.5 },
+    { transform: `translate(0, 0) rotate(${to.rotate}deg) scale(1)`, opacity: 1, offset: 0.88 },
+    { transform: `translate(0, 0) rotate(${to.rotate}deg) scale(1)`, opacity: 0 }
+  ], { duration: ms, delay: reducedMotion ? 0 : delay, easing: "cubic-bezier(0.45, 0, 0.3, 1)", fill: "both" });
+  return anim.finished.then(() => img.remove(), () => img.remove());
+}
+
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Finish selecting photos -> they float into the globe -> decorate & shake
+done.onclick = async () => {
+  if (selected.length !== 3 || stage.dataset.busy) return;
+  stage.dataset.busy = "1";
+  done.disabled = true;
+
+  const items = [...gallery.children];
+  const flights = selected.map((index, k) => {
+    const item = items[index];
+    const from = itemBox(item);
+    item.classList.add("is-flying");
+    // the photo appears in its opening just as the flying copy lands
+    setTimeout(() => {
+      const hole = holes[k];
+      hole.src = candidates[index].url;
+      hole.style.display = "block";
+      hole.classList.add("is-landing");
+    }, (reducedMotion ? 0 : 700 + k * 140));
+    return flyPhoto(candidates[index].url, from, holeBox(k), k * 140);
+  });
+  items.forEach((item, i) => {
+    if (!selected.includes(i)) item.classList.add("is-leaving");
+  });
+
+  await Promise.all(flights);
+  holes.forEach(h => h.classList.remove("is-landing"));
+  delete stage.dataset.busy;
+  finishGlobe();
+};
+
+function finishGlobe() {
+  stage.dataset.state = "finished";
+  stage_ = "finished";
   updateGlobe();
-  stage = "finished";
+  gallery.hidden = true;
   selectionArea.hidden = true;
   finalArea.hidden = false;
+  stickerTray.hidden = false;
+  layoutFloaters();
   globe.classList.add("is-shakeable");
-  status.textContent = "Your moments are frozen! Decorate your globe, then shake it ❄️";
+  status.textContent = "Your moments are frozen! Decorate your globe, then shake it";
 
   if (!dateText.value) {
     dateText.value = Flurry.formatStampDate(recordedOn || new Date());
@@ -360,32 +535,47 @@ done.onclick = () => {
     rotation: Number(rotation.value)
   });
   shaker.enabled = true;
-};
+}
 
-// Go back to frame selection
-back.onclick = () => {
-  stage = "choosing";
+// Go back to frame selection: the photos float back out
+back.onclick = async () => {
+  if (stage.dataset.busy) return;
+  stage.dataset.busy = "1";
   shaker.stop();
   shaker.enabled = false;
   globe.classList.remove("is-shakeable");
   selectSticker(null);
+
+  const from = selected.map((_, k) => holeBox(k));
+  stage.dataset.state = "choosing";
+  stage_ = "choosing";
   finalArea.hidden = true;
+  stickerTray.hidden = true;
   selectionArea.hidden = false;
-  status.textContent = "Pick your favorite 3!";
+  status.textContent = "Pick your 3 favorite moments!";
+
+  const items = [...gallery.children];
+  items.forEach(item => item.classList.remove("is-leaving"));
+  selected.forEach(index => items[index].classList.add("is-flying"));
+  gallery.hidden = false;
+  layoutFloaters();
+  updateGlobe();
+
+  await Promise.all(selected.map((index, k) =>
+    flyPhoto(candidates[index].url, from[k], itemBox(items[index]), k * 100)
+      .then(() => items[index].classList.remove("is-flying"))
+  ));
+  delete stage.dataset.busy;
+  updateSelection();
 };
 
 // ---------- shaking ----------
 
 const shakeButton = document.getElementById("shakeButton");
-const soundButton = document.getElementById("soundButton");
 
 const shaker = new Flurry.ShakeGlobe(globe, {
   onStateChange: state => {
-    shakeButton.textContent = state.playing ? "Stop" : "Shake ❄️";
-    soundButton.hidden = !state.canReplay;
-    // The button says what clicking it will do
-    soundButton.textContent = state.muted ? "turn sound on" : "mute sound";
-    soundButton.setAttribute("aria-pressed", String(state.muted));
+    shakeButton.textContent = state.playing ? "Stop" : "Shake";
     // Let the video's own sound be heard: fade the background music
     // while a clip plays with sound, bring it back afterwards
     if (Flurry.music) Flurry.music.duck(state.playing && !state.muted);
@@ -401,8 +591,6 @@ shakeButton.onclick = () => {
   shaker.shake(1, Math.random() < 0.5 ? -1 : 1);
 };
 
-soundButton.onclick = () => shaker.toggleMuted();
-
 // ---------- stickers ----------
 
 const stickerLayer = document.getElementById("stickerLayer");
@@ -410,45 +598,144 @@ const stickerTray = document.getElementById("stickerTray");
 let stickers = [];        // { id, x, y, width, rotate, el }
 let activeSticker = null;
 
+const MIN_STICKER = 0.07;
+const MAX_STICKER = 0.6;
+
+// The stickers float beside the globe. Drag one off ("peel" it) and drop
+// it on the globe, or just click it to stick it in its usual spot.
 Flurry.STICKERS.forEach(def => {
-  const button = document.createElement("button");
-  button.className = "sticker-choice";
-  button.title = "Add " + def.label.toLowerCase();
-  button.setAttribute("aria-label", "Add " + def.label.toLowerCase() + " sticker");
+  const { item, bob } = floatItem("float-sticker");
+  item.title = "Peel off the " + def.label.toLowerCase();
+  item.setAttribute("aria-label", "Add " + def.label.toLowerCase() + " sticker");
   const img = document.createElement("img");
   img.src = def.src;
   img.alt = "";
-  button.appendChild(img);
-  button.onclick = () => addSticker(def);
-  stickerTray.appendChild(button);
+  img.draggable = false;
+  bob.appendChild(img);
+  makePeelable(item, def);
+  stickerTray.appendChild(item);
 });
 
-function addSticker(def) {
+function makePeelable(item, def) {
+  let ghost = null;
+  let startX = 0;
+  let startY = 0;
+  let peeled = false;
+  let skipClick = false;
+
+  item.addEventListener("pointerdown", event => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    startX = event.clientX;
+    startY = event.clientY;
+    peeled = false;
+    item.setPointerCapture(event.pointerId);
+  });
+
+  item.addEventListener("pointermove", event => {
+    if (!item.hasPointerCapture(event.pointerId)) return;
+    if (!peeled && Math.hypot(event.clientX - startX, event.clientY - startY) < 6) return;
+    if (!peeled) {
+      peeled = true;
+      // a fresh copy lifts off the sheet and follows your finger
+      ghost = document.createElement("img");
+      ghost.src = def.src;
+      ghost.alt = "";
+      ghost.className = "peel-ghost";
+      ghost.style.width = def.width * globe.offsetWidth + "px";
+      document.body.appendChild(ghost);
+      item.classList.add("is-peeled");
+    }
+    ghost.style.left = event.clientX + "px";
+    ghost.style.top = event.clientY + "px";
+  });
+
+  const finish = event => {
+    if (!item.hasPointerCapture(event.pointerId)) return;
+    item.releasePointerCapture(event.pointerId);
+    item.classList.remove("is-peeled");
+    if (!peeled) return;           // a plain click: handled below
+    skipClick = true;
+
+    const box = globe.getBoundingClientRect();
+    const fx = (event.clientX - box.left) / box.width;
+    const fy = (event.clientY - box.top) / box.height;
+    const onGlobe = event.type === "pointerup" && fx > 0 && fx < 1 && fy > 0 && fy < 1;
+
+    if (onGlobe) {
+      ghost.remove();
+      addSticker(def, { x: fx, y: fy });
+    } else {
+      // dropped off the globe: it floats back onto the sheet
+      const home = item.getBoundingClientRect();
+      const g = ghost;
+      g.animate([
+        { transform: "translate(-50%, -50%) rotate(-8deg) scale(1.1)" },
+        { transform: `translate(calc(-50% + ${home.left + home.width / 2 - event.clientX}px), calc(-50% + ${home.top + home.height / 2 - event.clientY}px)) scale(0.6)`, opacity: 0 }
+      ], { duration: reducedMotion ? 10 : 350, easing: "ease-in", fill: "forwards" })
+        .finished.then(() => g.remove(), () => g.remove());
+    }
+    ghost = null;
+  };
+  item.addEventListener("pointerup", finish);
+  item.addEventListener("pointercancel", finish);
+
+  // click / Enter / Space: stick it on in its usual spot
+  item.addEventListener("click", () => {
+    if (skipClick) {
+      skipClick = false;
+      return;
+    }
+    addSticker(def);
+  });
+}
+
+function clampSticker(s) {
+  s.width = Math.min(MAX_STICKER, Math.max(MIN_STICKER, s.width));
+  const half = Math.min(s.width / 2, 0.3);
+  s.x = Math.min(1 - half, Math.max(half, s.x));
+  s.y = Math.min(0.95, Math.max(0.05, s.y));
+}
+
+function addSticker(def, at) {
   if (stickers.length >= 12) return;
   // Start at this sticker's spot; repeats of the same sticker shift a bit
   const repeats = stickers.filter(x => x.id === def.id).length;
   const s = {
     id: def.id,
-    x: Math.min(0.9, Math.max(0.1, def.spot.x + repeats * 0.06 * (def.spot.x > 0.5 ? -1 : 1))),
-    y: Math.min(0.9, def.spot.y + repeats * 0.05),
+    x: at ? at.x : def.spot.x + repeats * 0.06 * (def.spot.x > 0.5 ? -1 : 1),
+    y: at ? at.y : def.spot.y + repeats * 0.05,
     width: def.width,
     rotate: Math.round((Math.random() - 0.5) * 20)
   };
+  clampSticker(s);
   s.el = Flurry.stickerElement(s);
   s.el.tabIndex = 0;
+  s.el.classList.add("just-stuck");
+  s.el.addEventListener("animationend", () => s.el.classList.remove("just-stuck"), { once: true });
+  s.el.addEventListener("load", () => { if (activeSticker === s) positionControls(); });
   stickerLayer.appendChild(s.el);
   stickers.push(s);
   makeDraggable(s);
   selectSticker(s);
 }
 
-// Small "x" that appears on the chosen sticker
-const removeButton = document.createElement("button");
-removeButton.className = "sticker-remove";
-removeButton.textContent = "×";
-removeButton.setAttribute("aria-label", "Remove sticker");
-removeButton.hidden = true;
-stickerLayer.appendChild(removeButton);
+// Controls on the chosen sticker: "x" to remove, a dot to resize / turn
+function control(className, text, label) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = className;
+  b.textContent = text;
+  b.setAttribute("aria-label", label);
+  b.hidden = true;
+  stickerLayer.appendChild(b);
+  return b;
+}
+
+const removeButton = control("sticker-remove", "×", "Remove sticker");
+const turnHandle = control("sticker-turn", "↻", "Drag to resize or turn the sticker");
+turnHandle.title = "drag to resize or turn";
+turnHandle.tabIndex = -1;
 
 removeButton.addEventListener("pointerdown", event => event.stopPropagation());
 removeButton.onclick = event => {
@@ -466,17 +753,71 @@ function removeSticker(s) {
 function selectSticker(s) {
   activeSticker = s;
   stickers.forEach(x => x.el.classList.toggle("is-selected", x === s));
-  removeButton.hidden = !s;
-  if (s) positionRemoveButton();
+  removeButton.hidden = turnHandle.hidden = !s;
+  if (s) positionControls();
 }
 
-function positionRemoveButton() {
-  const s = activeSticker;
-  const box = globe.getBoundingClientRect();
-  const h = s.el.offsetHeight / box.height;
-  removeButton.style.left = ((s.x + s.width / 2) * 100) + "%";
-  removeButton.style.top = ((s.y - h / 2) * 100) + "%";
+// A corner of the (turned) sticker, as % of the globe
+function stickerCorner(s, sx, sy) {
+  const W = globe.offsetWidth;
+  const H = globe.offsetHeight;
+  const w = s.width * W;
+  const h = s.el.offsetHeight || w;
+  const a = (s.rotate || 0) * Math.PI / 180;
+  const lx = sx * w / 2;
+  const ly = sy * h / 2;
+  const x = s.x * W + lx * Math.cos(a) - ly * Math.sin(a);
+  const y = s.y * H + lx * Math.sin(a) + ly * Math.cos(a);
+  const clamp = v => Math.min(96, Math.max(4, v));
+  return [clamp(x / W * 100) + "%", clamp(y / H * 100) + "%"];
 }
+
+function positionControls() {
+  const s = activeSticker;
+  if (!s) return;
+  [removeButton.style.left, removeButton.style.top] = stickerCorner(s, 1, -1);
+  [turnHandle.style.left, turnHandle.style.top] = stickerCorner(s, 1, 1);
+}
+
+function updateSticker(s) {
+  clampSticker(s);
+  Flurry.placeSticker(s.el, s);
+  positionControls();
+}
+
+// Drag the dot: further from the middle = bigger, round = turn
+turnHandle.addEventListener("pointerdown", event => {
+  const s = activeSticker;
+  if (!s) return;
+  event.stopPropagation();
+  event.preventDefault();
+  const box = globe.getBoundingClientRect();
+  const cx = box.left + s.x * box.width;
+  const cy = box.top + s.y * box.height;
+  const d0 = Math.hypot(event.clientX - cx, event.clientY - cy) || 1;
+  const a0 = Math.atan2(event.clientY - cy, event.clientX - cx);
+  const w0 = s.width;
+  const r0 = s.rotate || 0;
+  turnHandle.setPointerCapture(event.pointerId);
+  s.el.classList.add("is-dragging");
+
+  const move = e => {
+    const d = Math.hypot(e.clientX - cx, e.clientY - cy);
+    const a = Math.atan2(e.clientY - cy, e.clientX - cx);
+    s.width = w0 * d / d0;
+    s.rotate = Math.round(r0 + (a - a0) * 180 / Math.PI);
+    updateSticker(s);
+  };
+  const up = () => {
+    s.el.classList.remove("is-dragging");
+    turnHandle.removeEventListener("pointermove", move);
+    turnHandle.removeEventListener("pointerup", up);
+    turnHandle.removeEventListener("pointercancel", up);
+  };
+  turnHandle.addEventListener("pointermove", move);
+  turnHandle.addEventListener("pointerup", up);
+  turnHandle.addEventListener("pointercancel", up);
+});
 
 function makeDraggable(s) {
   let offsetX = 0;
@@ -496,32 +837,42 @@ function makeDraggable(s) {
   s.el.addEventListener("pointermove", event => {
     if (!s.el.hasPointerCapture(event.pointerId)) return;
     const box = globe.getBoundingClientRect();
-    const halfW = s.width / 2;
-    const halfH = s.el.offsetHeight / box.height / 2;
-    // keep the whole sticker on the globe
-    s.x = Math.min(1 - halfW, Math.max(halfW, (event.clientX - box.left) / box.width - offsetX));
-    s.y = Math.min(1 - halfH, Math.max(halfH, (event.clientY - box.top) / box.height - offsetY));
-    Flurry.placeSticker(s.el, s);
-    positionRemoveButton();
+    s.x = (event.clientX - box.left) / box.width - offsetX;
+    s.y = (event.clientY - box.top) / box.height - offsetY;
+    updateSticker(s);
   });
 
   const end = () => s.el.classList.remove("is-dragging");
   s.el.addEventListener("pointerup", end);
   s.el.addEventListener("pointercancel", end);
 
+  // Scroll over a sticker to resize it
+  s.el.addEventListener("wheel", event => {
+    event.preventDefault();
+    selectSticker(s);
+    s.width *= Math.exp(-event.deltaY * 0.0015);
+    updateSticker(s);
+  }, { passive: false });
+
+  // Keyboard: arrows move, + / - resize, [ / ] turn, Delete removes
   s.el.addEventListener("keydown", event => {
     const step = 0.02;
-    if (event.key === "Delete" || event.key === "Backspace") removeSticker(s);
-    else if (event.key === "ArrowLeft") s.x = Math.max(s.width / 2, s.x - step);
-    else if (event.key === "ArrowRight") s.x = Math.min(1 - s.width / 2, s.x + step);
-    else if (event.key === "ArrowUp") s.y = Math.max(0.05, s.y - step);
-    else if (event.key === "ArrowDown") s.y = Math.min(0.95, s.y + step);
+    if (event.key === "Delete" || event.key === "Backspace") {
+      removeSticker(s);
+      event.preventDefault();
+      return;
+    }
+    if (event.key === "ArrowLeft") s.x -= step;
+    else if (event.key === "ArrowRight") s.x += step;
+    else if (event.key === "ArrowUp") s.y -= step;
+    else if (event.key === "ArrowDown") s.y += step;
+    else if (event.key === "+" || event.key === "=") s.width *= 1.08;
+    else if (event.key === "-" || event.key === "_") s.width /= 1.08;
+    else if (event.key === "]") s.rotate = (s.rotate || 0) + 5;
+    else if (event.key === "[") s.rotate = (s.rotate || 0) - 5;
     else return;
     event.preventDefault();
-    if (stickers.includes(s)) {
-      Flurry.placeSticker(s.el, s);
-      positionRemoveButton();
-    }
+    updateSticker(s);
   });
   s.el.addEventListener("focus", () => selectSticker(s));
 }
@@ -595,7 +946,12 @@ saveButton.onclick = async () => {
       date: design.date
     };
 
-    const result = await Flurry.store.save(memory, currentFile);
+    // a little pink glow while it's tucked away on the shelf
+    globe.classList.add("is-saved");
+    const [result] = await Promise.all([
+      Flurry.store.save(memory, currentFile),
+      new Promise(resolve => setTimeout(resolve, reducedMotion ? 200 : 1300))
+    ]);
 
     if (!result.videoSaved && result.reason) {
       alert(result.reason === "size"
@@ -607,6 +963,7 @@ saveButton.onclick = async () => {
 
   } catch (error) {
     console.error(error);
+    globe.classList.remove("is-saved");
     status.textContent = "Could not save snow globe. Try again?";
     saveButton.disabled = false;
   }
@@ -618,7 +975,11 @@ rotation.addEventListener("change", async () => {
   if (!candidates.length) return;
   rotation.disabled = true;
   await applyRotation();
+  // keep the picks when the photos are turned
+  const keep = selected;
   displayGallery();
+  selected = keep;
+  updateSelection();
   updateGlobe();
   rotation.disabled = false;
 });

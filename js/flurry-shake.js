@@ -1,8 +1,8 @@
 // Shake the snow globe!
 //
 // - Drag the globe left and right (mouse or touch), or call shake()
-// - The globe tilts and wobbles, snow swirls inside the drawn glass dome
-//   and slowly settles
+// - The globe tilts and wobbles; the snow resting on the mound is thrown
+//   up, swirls with the water the way you shook it, and drifts back down
 // - If the memory has its video, each photo turns into a short clip of
 //   that moment (with sound), one at a time, then fades back to the photo
 //
@@ -202,150 +202,232 @@ Flurry.ShakeGlobe = class {
   }
 
   // ---------- snow inside the dome ----------
+  //
+  // The snow lives in "water": each flake follows the water's flow and
+  // sinks slowly through it. At rest the flakes lie on the drawn snow
+  // mound. A shake throws them up from the bottom and sets the water
+  // sloshing and swirling in the direction you shook; then it calms
+  // down and the flakes drift back down and settle again.
+  //
+  // Positions and speeds are in units of the globe's width, so the
+  // snow keeps its place when the globe changes size.
 
   setupSnow() {
     this.flakes = [];
     this.active = false;
-    this.energy = 0;
-    const count = 150;
-    for (let i = 0; i < count; i++) {
-      this.flakes.push({ x: 0, y: 0, vx: 0, vy: 0, r: 0, a: 0, settled: true });
-    }
+    this.water = { swirl: 0, slosh: 0, stir: 0, t: 0 };
+    this.W = 1;
+    this.H = 1;
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      this.W = this.el.clientWidth;
-      this.H = this.el.clientHeight;
+      this.W = this.el.clientWidth || 1;
+      this.H = this.el.clientHeight || 1;
       this.canvas.width = Math.round(this.W * dpr);
       this.canvas.height = Math.round(this.H * dpr);
       this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (!this.flakes.length) this.makeFlakes();
+      if (!this.active) this.draw();
     };
     resize();
     if (window.ResizeObserver) new ResizeObserver(resize).observe(this.el);
+    this.canvas.classList.add("is-on");
   }
 
+  makeFlakes() {
+    for (let i = 0; i < 170; i++) {
+      const f = {
+        x: 0, y: 0, vx: 0, vy: 0,
+        r: 0.0032 + Math.random() * 0.0042,      // radius
+        sink: 0.055 + Math.random() * 0.06,      // how fast it sinks
+        phase: Math.random() * Math.PI * 2,
+        settled: true
+      };
+      this.restOnMound(f, true);
+      this.flakes.push(f);
+    }
+  }
+
+  // The glass, in width units
   dome() {
     const d = Flurry.GLOBE.dome;
-    return {
-      cx: d.cx * this.W,
-      cy: d.cy * this.H,
-      r: d.r * this.W * 0.94, // just inside the drawn outline
-      floor: d.floor * this.H
-    };
+    const k = this.H / this.W;
+    return { cx: d.cx, cy: d.cy * k, r: d.r * 0.94 };
   }
 
-  stir(strength, direction) {
-    const { cx, cy, r, floor } = this.dome();
-    const wasActive = this.active;
-    this.energy = Math.min(1.4, this.energy + strength);
-    const scale = this.W / 400;
-
-    this.flakes.forEach(f => {
-      if (!wasActive || f.settled) {
-        // Lift flakes out of the snow pile at the bottom of the dome
-        const angle = Math.random() * Math.PI * 2;
-        const dist = Math.sqrt(Math.random()) * r * 0.85;
-        f.x = cx + Math.cos(angle) * dist;
-        f.y = Math.min(floor - 4, Math.max(cy - r * 0.2, floor - Math.random() * r * 0.6));
-        f.r = (Math.random() * 1.8 + 1.1) * scale;
-        f.a = 0;
-        f.settled = false;
+  // Top of the drawn snow mound at x (it slopes up to the right)
+  moundY(x) {
+    const pts = Flurry.GLOBE.mound;
+    let y = pts[0][1];
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1];
+      const [x1, y1] = pts[i];
+      if (x <= x1) {
+        const t = Math.max(0, Math.min(1, (x - x0) / (x1 - x0)));
+        y = y0 + (y1 - y0) * t;
+        break;
       }
-      const kick = this.reducedMotion ? 0.15 : 1;
-      f.vx += ((Math.random() - 0.5) * 260 + direction * 160) * strength * kick * scale;
-      f.vy += (-Math.random() * 300 - 40) * strength * kick * scale;
-    });
+      y = y1;
+    }
+    return y * this.H / this.W;
+  }
+
+  // Where the mound meets the glass
+  moundSpan() {
+    const pts = Flurry.GLOBE.mound;
+    return [pts[0][0] + 0.01, pts[pts.length - 1][0] - 0.01];
+  }
+
+  restOnMound(f, anywhere) {
+    if (anywhere) {
+      const [a, b] = this.moundSpan();
+      f.x = a + Math.random() * (b - a);
+    }
+    // nestle into the top of the snow, a little bit of it showing
+    f.y = this.moundY(f.x) + 0.004 - Math.random() * 0.012;
+    f.vx = f.vy = 0;
+    f.settled = true;
+  }
+
+  // Shake the water. strength ~0..1.4, direction -1 (left) / 1 (right)
+  stir(strength, direction) {
+    const calm = this.reducedMotion ? 0.25 : 1;
+    const s = strength * calm;
+    const w = this.water;
+    const dir = direction || (Math.random() < 0.5 ? -1 : 1);
+
+    w.swirl = Math.max(-1.6, Math.min(1.6, w.swirl + dir * s * 0.9));
+    w.slosh = Math.max(-1.2, Math.min(1.2, w.slosh + dir * s * 0.7));
+    w.stir = Math.min(1.5, w.stir + s);
+
+    for (const f of this.flakes) {
+      if (f.settled) {
+        // Strong shakes lift almost everything, little wiggles lift some
+        if (Math.random() > Math.min(1, s * 1.15)) continue;
+        f.settled = false;
+        f.vy = -(0.9 + Math.random() * 1.4) * s;
+        f.vx = ((Math.random() - 0.5) * 0.7 + dir * 0.45) * s;
+      } else {
+        f.vx += ((Math.random() - 0.5) * 0.35 + dir * 0.3) * s;
+        f.vy += (Math.random() - 0.65) * 0.4 * s;
+      }
+    }
 
     if (!this.active) {
       this.active = true;
-      this.canvas.classList.add("is-on");
       this.last = performance.now();
       requestAnimationFrame(t => this.tick(t));
     }
   }
 
+  // How the water is moving at (x, y)
+  flow(x, y, cx, cy, r) {
+    const w = this.water;
+    const dx = x - cx;
+    const dy = y - cy;
+    // swirl: the water turns round the middle like a whirlpool
+    const spin = w.swirl * 1.1;
+    let ux = -dy * spin;
+    let uy = dx * spin;
+    // slosh: side to side, rolling up the walls
+    ux += w.slosh * 0.32;
+    uy += -w.slosh * 0.32 * (dx / r) * 0.6;
+    // eddies: little random curls so the snow tumbles
+    const e = w.stir * 0.11;
+    const t = w.t;
+    ux += e * Math.sin(y * 21 + t * 1.7) + e * 0.6 * Math.sin(y * 9 - t * 1.1 + 2);
+    uy += e * Math.cos(x * 19 - t * 1.4) + e * 0.6 * Math.cos(x * 7 + t * 0.9 + 1);
+    return [ux, uy];
+  }
+
   tick(now) {
     const dt = Math.min(0.05, (now - this.last) / 1000);
     this.last = now;
-    const { cx, cy, r, floor } = this.dome();
-    const scale = this.W / 400;
-    const ctx = this.ctx;
+    const { cx, cy, r } = this.dome();
+    const w = this.water;
 
-    this.energy *= Math.exp(-dt / 1.6);
-    const swirl = this.reducedMotion ? 0 : this.energy;
+    w.t += dt;
+    w.swirl *= Math.exp(-dt / 1.9);
+    w.slosh *= Math.exp(-dt / 0.8);
+    w.stir *= Math.exp(-dt / 1.6);
+
+    // flakes catch up with the water quickly (they are tiny and light)
+    const follow = 1 - Math.exp(-dt * 3.2);
     let moving = 0;
 
-    ctx.clearRect(0, 0, this.W, this.H);
-    ctx.fillStyle = "#ffffff";
-
     for (const f of this.flakes) {
-      if (f.settled && f.a <= 0) continue;
+      if (f.settled) continue;
+      moving++;
 
-      if (!f.settled) {
-        // Swirl around the centre of the dome, plus a little wobble
-        const dx = f.x - cx;
-        const dy = f.y - cy;
-        const dist = Math.hypot(dx, dy) || 1;
-        f.vx += (-dy / dist) * 220 * swirl * scale * dt;
-        f.vy += (dx / dist) * 220 * swirl * scale * dt;
-        f.vx += (Math.random() - 0.5) * 60 * scale * dt;
+      const [ux, uy] = this.flow(f.x, f.y, cx, cy, r);
+      const flutter = Math.sin(w.t * 2.3 + f.phase) * 0.012;
+      f.vx += (ux + flutter - f.vx) * follow;
+      f.vy += (uy + f.sink - f.vy) * follow;
 
-        // Gentle gravity and water-like drag: snow drifts down slowly
-        f.vy += 120 * scale * dt;
-        const drag = Math.exp(-dt * 2.2);
-        f.vx *= drag;
-        f.vy *= drag;
+      f.x += f.vx * dt;
+      f.y += f.vy * dt;
 
-        f.x += f.vx * dt;
-        f.y += f.vy * dt;
-
-        // Bounce softly off the glass
-        const ox = f.x - cx;
-        const oy = f.y - cy;
-        const od = Math.hypot(ox, oy);
-        const limit = r - f.r;
-        if (od > limit) {
-          const nx = ox / od;
-          const ny = oy / od;
-          f.x = cx + nx * limit;
-          f.y = cy + ny * limit;
-          const vn = f.vx * nx + f.vy * ny;
-          if (vn > 0) {
-            f.vx -= 1.6 * vn * nx;
-            f.vy -= 1.6 * vn * ny;
-          }
+      // Stay inside the glass
+      const ox = f.x - cx;
+      const oy = f.y - cy;
+      const od = Math.hypot(ox, oy) || 1;
+      const limit = r - f.r;
+      if (od > limit) {
+        const nx = ox / od;
+        const ny = oy / od;
+        f.x = cx + nx * limit;
+        f.y = cy + ny * limit;
+        const vn = f.vx * nx + f.vy * ny;
+        if (vn > 0) {
+          f.vx -= 1.3 * vn * nx;
+          f.vy -= 1.3 * vn * ny;
         }
-
-        // Land on the snow mound
-        if (f.y > floor && f.vy > 0) {
-          f.y = floor;
-          f.settled = true;
-        }
-
-        f.a = Math.min(1, f.a + dt * 4);
-        moving++;
-      } else {
-        f.a -= dt * 1.2; // settled flakes melt into the drawn snow
       }
 
-      if (f.a > 0) {
-        ctx.globalAlpha = Math.max(0, f.a) * 0.92;
-        ctx.beginPath();
-        ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
-        ctx.fill();
+      // Land on the mound once the water has calmed down there
+      const ground = this.moundY(f.x);
+      if (f.y >= ground - 0.004) {
+        const [a, b] = this.moundSpan();
+        f.x = Math.max(a, Math.min(b, f.x));
+        if (f.vy > 0 && Math.hypot(ux, uy) < 0.2) {
+          this.restOnMound(f, false);
+        } else {
+          f.y = ground - 0.004;
+          if (f.vy > 0) f.vy *= -0.3;
+        }
       }
     }
-    ctx.globalAlpha = 1;
 
-    const visible = this.flakes.some(f => f.a > 0);
-    if (moving > 0 || visible) {
+    this.draw();
+
+    if (moving > 0) {
       requestAnimationFrame(t => this.tick(t));
     } else {
       this.active = false;
-      this.energy = 0;
-      this.canvas.classList.remove("is-on");
-      ctx.clearRect(0, 0, this.W, this.H);
+      w.swirl = w.slosh = w.stir = 0;
     }
+  }
+
+  draw() {
+    const ctx = this.ctx;
+    const W = this.W;
+    ctx.clearRect(0, 0, W, this.H);
+    // soft lilac edge so white flakes still show on white snow / photos
+    ctx.fillStyle = "#ffffff";
+    ctx.shadowColor = "rgba(120, 128, 200, 0.45)";
+    ctx.shadowBlur = 1.5;
+    ctx.beginPath();
+    for (const f of this.flakes) {
+      const x = f.x * W;
+      const y = f.y * W;
+      const rad = Math.max(0.8, f.r * W);
+      ctx.moveTo(x + rad, y);
+      ctx.arc(x, y, rad, 0, Math.PI * 2);
+    }
+    ctx.globalAlpha = 0.95;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
   }
 
   // ---------- replaying the moments ----------

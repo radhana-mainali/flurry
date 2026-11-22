@@ -22,7 +22,15 @@ Flurry.GLOBE = {
   // The glass dome, measured from the artwork: a circle centred at
   // (cx, cy) (fractions of width / height) with radius r (fraction of
   // width). floor = top of the drawn snow mound (fraction of height).
-  dome: { cx: 0.466, cy: 0.398, r: 0.445, floor: 0.665 }
+  dome: { cx: 0.466, cy: 0.398, r: 0.445, floor: 0.665 },
+
+  // Top edge of the drawn snow mound inside the glass, left to right
+  // ([x fraction of width, y fraction of height]). It slopes up to the
+  // right, so settled snow lies along it.
+  mound: [
+    [0.20, 0.674], [0.30, 0.676], [0.45, 0.668], [0.60, 0.655],
+    [0.72, 0.635], [0.79, 0.615]
+  ]
 };
 
 // Each sticker has a default spot around the edge of the glass, so a new

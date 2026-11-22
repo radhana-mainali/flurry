@@ -43,7 +43,11 @@ body {
 
   background-attachment: fixed;
 
-  cursor: url('./images/cursors/wand.png') 40 8, auto;
+  /* the team's wand, pointing up-left like a normal pointer;
+     the @2x copy keeps it sharp on Retina screens */
+  cursor: url('./images/cursors/wand.png') 2 2, auto;
+  cursor: -webkit-image-set(url('./images/cursors/wand.png') 1x, url('./images/cursors/wand@2x.png') 2x) 2 2, auto;
+  cursor: image-set(url('./images/cursors/wand.png') 1x, url('./images/cursors/wand@2x.png') 2x) 2 2, auto;
 }
 
 main {
@@ -69,11 +73,15 @@ select,
 input,
 label,
 .globe-click,
-#gallery .photo,
+.float-item,
 .saved-globe,
 .pager-link,
-.music-toggle {
-  cursor: url('./images/cursors/mitten.png') 12 2, pointer;
+.music-toggle,
+.sticker-turn,
+.sticker-layer .globe-sticker {
+  cursor: url('./images/cursors/mitten.png') 9 2, pointer;
+  cursor: -webkit-image-set(url('./images/cursors/mitten.png') 1x, url('./images/cursors/mitten@2x.png') 2x) 9 2, pointer;
+  cursor: image-set(url('./images/cursors/mitten.png') 1x, url('./images/cursors/mitten@2x.png') 2x) 9 2, pointer;
 }
 
 button:disabled {
@@ -144,15 +152,15 @@ select {
   position: relative;
   container-type: inline-size;
 
-  width: min(410px, 80vw, calc((100dvh - 290px) * 956 / 1107));
-  min-width: 200px;
+  width: min(440px, 80vw, calc((100dvh - 330px) * 956 / 1107));
+  min-width: 180px;
   aspect-ratio: 956 / 1107;
 
   margin: 0 auto;
   overflow: hidden;
   flex-shrink: 0;
 
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, width 0.4s ease;
 }
 
 .globe:hover {
@@ -278,53 +286,187 @@ select {
 }
 
 
-/* PHOTO SELECTION */
+/* PHOTO SELECTION: "2 / 3 picked" + Done */
 
 #selectionArea {
-  width: 100%;
-  max-width: 700px;
-
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   margin: 3px auto;
 }
 
-#selectionArea h2 {
-  font-size: 18px;
-  margin: 4px 0;
-}
-
 #counter {
-  margin: 3px 0;
+  font-size: 16px;
+  color: #4b6478;
 }
 
 
-/* TEN FRAMES */
+/* THINGS FLOATING AROUND THE GLOBE (the 10 moments, then the stickers) */
 
-#gallery {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-
-  gap: 5px;
-
+.globe-stage {
+  position: relative;
   width: 100%;
-  max-width: 650px;
+  max-width: 1000px;
+  margin: 0 auto;
 
-  margin: 5px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  transition: height 0.4s ease;
 }
 
-#gallery .photo {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1;
+.float-ring {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
 
+.float-item {
+  position: absolute;
+  padding: 0;
+  border: none;
+  background: none;
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+
+  animation: float-in 0.6s ease both;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.float-bob {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: rotate(var(--tilt));
+  animation: bob var(--bob-time, 4s) ease-in-out var(--bob-delay, 0s) infinite;
+  transition: scale 0.2s ease;
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0) rotate(var(--tilt)); }
+  50%      { transform: translateY(-7px) rotate(calc(var(--tilt) * -0.5)); }
+}
+
+@keyframes float-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: none; }
+}
+
+.float-item:hover .float-bob,
+.float-item:focus-visible .float-bob {
+  scale: 1.07;
+}
+
+.float-item:focus-visible {
+  outline: none;
+}
+
+/* the 10 moments: little photos with a white border */
+.float-frame .photo {
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-
-  margin: 0;
-  border: 3px solid transparent;
-  border-radius: 8px;
+  border: 4px solid white;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(75, 70, 130, 0.25);
+  pointer-events: none;
+  transition: box-shadow 0.2s ease;
 }
 
-#gallery .photo.selected {
-  border-color: #8496ff;
+.float-frame.selected .photo {
+  box-shadow: 0 0 0 3px #f4a6c8, 0 0 18px 5px rgba(244, 166, 200, 0.85);
+}
+
+.float-frame.selected .float-bob {
+  scale: 1.08;
+}
+
+/* which opening a pick goes into (1, 2, 3) */
+.pick-badge {
+  position: absolute;
+  top: -9px;
+  left: -9px;
+  width: 26px;
+  height: 26px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  border: 2px solid white;
+  border-radius: 50%;
+  background: #f4a6c8;
+  color: white;
+  font-size: 14px;
+}
+
+.float-frame.selected .pick-badge {
+  display: flex;
+}
+
+.float-item.is-flying {
+  visibility: hidden;
+}
+
+.float-item.is-leaving {
+  opacity: 0;
+  transform: scale(0.5);
+  pointer-events: none;
+}
+
+/* the copy of a photo floating into / out of the globe */
+.flying-photo {
+  position: fixed;
+  z-index: 300;
+  object-fit: cover;
+  pointer-events: none;
+  border-radius: 4px;
+  box-shadow: 0 6px 16px rgba(75, 70, 130, 0.3);
+}
+
+.globe-photo.is-landing {
+  animation: land 0.3s ease both;
+}
+
+@keyframes land {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* the stickers, waiting to be peeled off */
+.float-sticker img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* soft outline so the white snowflake shows on the pale background */
+  filter: drop-shadow(0 0 1px #8a93d6) drop-shadow(0 2px 2px rgba(75, 100, 120, 0.25));
+  pointer-events: none;
+}
+
+.float-sticker.is-peeled .float-bob {
+  animation: peel 0.5s ease;
+}
+
+@keyframes peel {
+  0%   { scale: 1; }
+  30%  { scale: 0.82; }
+  100% { scale: 1; }
+}
+
+.peel-ghost {
+  position: fixed;
+  z-index: 300;
+  height: auto;
+  pointer-events: none;
+  transform: translate(-50%, -50%) rotate(-8deg) scale(1.1);
+  filter: drop-shadow(0 10px 10px rgba(75, 70, 130, 0.35));
 }
 
 
@@ -383,30 +525,6 @@ select {
   color: #4b6478;
 }
 
-.sticker-choice {
-  width: 46px;
-  height: 46px;
-  padding: 2px;
-  border: none;
-  background: none;
-  transition: transform 0.2s ease;
-}
-
-.sticker-choice img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  /* soft outline so the white snowflake shows on the pale background */
-  filter: drop-shadow(0 0 1px #8a93d6) drop-shadow(0 1px 1px rgba(75, 100, 120, 0.25));
-  pointer-events: none;
-}
-
-.sticker-choice:hover,
-.sticker-choice:focus-visible {
-  transform: scale(1.15) rotate(-6deg);
-  outline: none;
-}
-
 .date-toggle {
   display: inline-flex;
   align-items: center;
@@ -444,19 +562,20 @@ select {
   color: #6f7fa0;
 }
 
-/* While decorating: rotation is already chosen, keep the globe on screen */
+/* While decorating: rotation is already chosen */
 body:has(#finalArea:not([hidden])) #rotationControls {
   display: none;
 }
 
-body:has(#finalArea:not([hidden])) .globe {
-  width: min(410px, 80vw, calc((100dvh - 390px) * 956 / 1107));
+/* Saved! A little pink glow */
+.globe.is-saved {
+  animation: saved-glow 1.3s ease-in-out both;
 }
 
-/* Smaller globe while picking frames */
-
-body:has(#selectionArea:not([hidden])) .globe {
-  width: min(27vh, 240px, 55vw);
+@keyframes saved-glow {
+  0%   { filter: drop-shadow(0 0 0 rgba(244, 166, 200, 0)); }
+  45%  { filter: drop-shadow(0 0 16px rgba(244, 166, 200, 0.95)) drop-shadow(0 0 30px rgba(255, 190, 220, 0.7)); }
+  100% { filter: drop-shadow(0 0 10px rgba(244, 166, 200, 0.8)); }
 }
 
 
@@ -543,19 +662,31 @@ body:has(#selectionArea:not([hidden])) .globe {
   filter: drop-shadow(0 2px 2px rgba(75, 70, 130, 0.18));
 }
 
-.sticker-layer .globe-sticker {
-  cursor: url('./images/cursors/mitten.png') 12 2, grab;
-}
-
 .globe-sticker.is-selected {
   filter: drop-shadow(0 0 2px #ffffff) drop-shadow(0 0 3px #f4a6c8);
+}
+
+.globe-sticker.is-dragging {
+  scale: 1.04;
+}
+
+/* pressed onto the glass */
+.globe-sticker.just-stuck {
+  animation: stick 0.35s ease;
+}
+
+@keyframes stick {
+  0%   { scale: 1.18; }
+  60%  { scale: 0.95; }
+  100% { scale: 1; }
 }
 
 .globe-sticker:focus-visible {
   outline: none;
 }
 
-.sticker-remove {
+.sticker-remove,
+.sticker-turn {
   position: absolute;
   z-index: 7;
   width: 26px;
@@ -570,6 +701,12 @@ body:has(#selectionArea:not([hidden])) .globe {
   font-size: 17px;
   line-height: 20px;
   pointer-events: auto;
+  touch-action: none;
+}
+
+.sticker-turn {
+  background: #8496ff;
+  font-size: 15px;
 }
 
 /* Shaking */
@@ -598,15 +735,6 @@ body:has(#selectionArea:not([hidden])) .globe {
   68%  { transform: rotate(3deg); }
   84%  { transform: rotate(-1deg); }
   100% { transform: rotate(0deg); }
-}
-
-
-/* Wide but short screens: all 10 frames in one row so Done stays visible */
-@media (min-width: 900px) and (max-height: 960px) {
-  #selectionArea #gallery {
-    grid-template-columns: repeat(10, minmax(0, 1fr));
-    max-width: 800px;
-  }
 }
 
 
@@ -818,6 +946,16 @@ body:has(#selectionArea:not([hidden])) .globe {
   outline: none;
 }
 
+/* The globe you just saved glows pink for a moment */
+.shelf-row .saved-globe.just-saved {
+  animation: just-saved 3.2s ease-out both;
+}
+
+@keyframes just-saved {
+  0%, 35% { filter: drop-shadow(0 0 12px rgba(244, 166, 200, 0.95)) drop-shadow(0 0 22px rgba(255, 190, 220, 0.7)); }
+  100%    { filter: drop-shadow(0 0 0 rgba(244, 166, 200, 0)); }
+}
+
 /* Empty shelf note, sitting above the top plank */
 .shelf-note {
   position: absolute;
@@ -930,13 +1068,6 @@ body:has(#selectionArea:not([hidden])) .globe {
     width: 280px;
   }
 
-  body:has(#selectionArea:not([hidden])) .globe {
-    width: min(25vh, 220px, 55vw);
-  }
-
-  #gallery {
-    max-width: 480px;
-  }
 }
 
 
@@ -955,16 +1086,20 @@ body:has(#selectionArea:not([hidden])) .globe {
     width: min(75vw, 400px);
   }
 
-  body:has(#selectionArea:not([hidden])) .globe {
-    width: min(45vw, 220px);
-  }
-
-  #gallery {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .rotation-controls {
     flex-wrap: wrap;
+  }
+}
+
+
+/* Phones: shrink the globe a little so the floating things fit beside it */
+@media (max-width: 640px) {
+  body:has(#selectionArea:not([hidden])) .globe {
+    width: min(48vw, 260px);
+  }
+
+  body:has(#finalArea:not([hidden])) .globe {
+    width: min(64vw, 360px);
   }
 }
 
@@ -983,6 +1118,13 @@ body:has(#selectionArea:not([hidden])) .globe {
   }
 
   .globe.is-wobbling {
+    animation: none;
+  }
+
+  .float-item,
+  .float-bob,
+  .globe-sticker.just-stuck,
+  .saved-globe.just-saved {
     animation: none;
   }
 

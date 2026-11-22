@@ -11,7 +11,6 @@ const viewerGlobe = document.getElementById("viewerGlobe");
 const memoryDate = document.getElementById("memoryDate");
 const replayNote = document.getElementById("replayNote");
 const viewerShake = document.getElementById("viewerShake");
-const viewerSound = document.getElementById("viewerSound");
 
 const pager = document.getElementById("shelfPager");
 const prevShelf = document.getElementById("prevShelf");
@@ -23,6 +22,8 @@ const PER_SHELF = 9;
 let memories = [];
 let page = 0;
 let objectUrls = [];
+// The globe that was just saved gets a little pink glow
+const justSaved = new URLSearchParams(location.search).get("saved");
 
 function thumbUrl(memory) {
   if (memory.legacy) return memory.image;
@@ -39,11 +40,7 @@ function pageCount() {
 
 const shaker = new Flurry.ShakeGlobe(viewerGlobe, {
   onStateChange: state => {
-    viewerShake.textContent = state.playing ? "Stop" : "Shake ❄️";
-    viewerSound.hidden = !state.canReplay;
-    // The button says what clicking it will do
-    viewerSound.textContent = state.muted ? "turn sound on" : "mute sound";
-    viewerSound.setAttribute("aria-pressed", String(state.muted));
+    viewerShake.textContent = state.playing ? "Stop" : "Shake";
     // Let the video's own sound be heard: fade the background music
     // while a clip plays with sound, bring it back afterwards
     if (Flurry.music) Flurry.music.duck(state.playing && !state.muted);
@@ -170,8 +167,6 @@ viewerShake.onclick = () => {
   shaker.shake(1, Math.random() < 0.5 ? -1 : 1);
 };
 
-viewerSound.onclick = () => shaker.toggleMuted();
-
 function displayShelf() {
   objectUrls.forEach(URL.revokeObjectURL);
   objectUrls = [];
@@ -198,6 +193,8 @@ function displayShelf() {
     img.className = "saved-globe";
     img.tabIndex = 0;
     img.setAttribute("role", "button");
+
+    if (memory.id === justSaved) img.classList.add("just-saved");
 
     img.onclick = () => openMemory(memory, src);
     img.onkeydown = event => {
@@ -253,7 +250,7 @@ document.addEventListener("keydown", event => {
 
   // Open the shelf page holding the newest globe
   page = pageCount() - 1;
-  const saved = new URLSearchParams(location.search).get("saved");
+  const saved = justSaved;
   if (saved) {
     const index = memories.findIndex(m => m.id === saved);
     if (index >= 0) page = Math.floor(index / PER_SHELF);
