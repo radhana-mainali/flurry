@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Crafty+Girls&family=Kranky&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="./images/favicon.png">
-  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./style.css?v=3">
 </head>
 
 <body class="home-page">
@@ -149,10 +149,12 @@
     </div>
   </main>
 
-  <script src="./js/flurry-globe.js"></script>
-  <script src="./js/flurry-store.js"></script>
-  <script src="./js/flurry-shake.js"></script>
-  <script src="./js/flurry-music.js"></script>
-  <script src="./js/home.js"></script>
+  <!-- ?v=3: bump this number (here, on the stylesheet and in the other
+       page) after changing any JS/CSS, so browsers load the new copies -->
+  <script src="./js/flurry-globe.js?v=3"></script>
+  <script src="./js/flurry-store.js?v=3"></script>
+  <script src="./js/flurry-shake.js?v=3"></script>
+  <script src="./js/flurry-music.js?v=3"></script>
+  <script src="./js/home.js?v=3"></script>
 </body>
 </html>

@@ -893,22 +893,21 @@ body:has(#finalArea:not([hidden])) #rotationControls {
 
 /* MY SHELF PAGE */
 
-/* The room behind the shelf (images/background.png), filling the screen
-   like background-size: cover. The fire, its glow and the window snow are
-   placed in fractions of the drawing, so they stay put at any size. */
+/* The room behind the shelf (images/background.png). On computers the
+   whole drawing is stretched to fit the screen exactly, so nothing is cut
+   off and there's nothing to scroll. The fire, its glow and the window snow
+   are placed in fractions of the drawing, so they stretch along with it. */
 .shelf-body {
-  --room-w: max(100vw, calc(100dvh * 2360 / 1640));
-  --room-h: calc(var(--room-w) * 1640 / 2360);
   background: #bfa684;
 }
 
 .room {
   position: fixed;
   z-index: 0;
-  width: var(--room-w);
-  height: var(--room-h);
-  left: calc((100vw - var(--room-w)) * 0.5);
-  top: calc((100dvh - var(--room-h)) * 0.8);
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100dvh;
   pointer-events: none;
 }
 
@@ -926,7 +925,7 @@ body:has(#finalArea:not([hidden])) #rotationControls {
   left: 73.5%;
   top: 66.1%;
   width: 14%;
-  height: auto;
+  height: 22.4%;
 }
 
 /* Warm light flickering round the fireplace */
@@ -1153,8 +1152,8 @@ body:has(#finalArea:not([hidden])) #rotationControls {
 /* Wide screens: the shelf hangs on the empty wall on the left */
 @media (min-width: 901px) and (min-aspect-ratio: 3/2) {
   .shelf-page {
-    /* as big as fits between the left edge and the window */
-    --wall: calc((100vw - var(--room-w)) * 0.5 + var(--room-w) * 0.345 - 1vw - 15px);
+    /* as big as fits between the left edge and the window, with a gap */
+    --wall: calc(32.5vw - 1vw - 50px);
     --shelf-col: min(600px, var(--wall), calc((100dvh - 135px) * 1038 / 1216));
     align-self: flex-start;
     width: calc(var(--shelf-col) + 30px);
@@ -1171,10 +1170,12 @@ body:has(#finalArea:not([hidden])) #rotationControls {
   }
 }
 
-/* Narrow screens: the shelf fills the middle; slide the room so the
-   fireplace peeks out on the right */
-@media (max-width: 900px), (max-aspect-ratio: 3/2) {
+/* Tall phone screens: stretching would squash the drawing too much, so
+   it fills the height instead (sides cut off) with the fireplace in view */
+@media (max-aspect-ratio: 1/1) {
   .room {
+    --room-w: calc(100dvh * 2360 / 1640);
+    width: var(--room-w);
     left: calc((100vw - var(--room-w)) * 0.86);
   }
 }
