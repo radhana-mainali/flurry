@@ -15,50 +15,69 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 
-<body>
-  <a href="./shelf.html" class="shelf-button">
-    My Shelf ❄️
-  </a>
+<body class="home-page">
 
   <main>
-    <img src="./images/title.png"
-         alt="Flurry"
-         class="site-title">
+    <!-- Flurry title -->
+    <img
+      src="./images/title.png"
+      alt="Flurry"
+      class="site-title"
+    >
 
-    <p>Freeze your favorite moments.</p>
+    <!-- Shelf button directly under title -->
+    <a href="./shelf.html" class="shelf-button">
+      My Shelf ❄️
+    </a>
+
+    <p class="tagline">Freeze your favorite moments.</p>
 
     <!-- Interactive snow globe -->
     <div class="globe" id="globe">
 
+      <!-- Selected photos -->
       <img class="globe-photo hole1" id="hole1" alt="">
       <img class="globe-photo hole2" id="hole2" alt="">
       <img class="globe-photo hole3" id="hole3" alt="">
 
-      <img src="./images/snowglobe-template.png"
-           class="globe-art"
-           alt="Snow globe">
+      <!-- Snow globe illustration -->
+      <img
+        src="./images/snowglobe-template.png"
+        class="globe-art"
+        alt="Snow globe"
+      >
 
-      <button id="snowglobeButton"
-              class="globe-click"
-              aria-label="Upload a video"></button>
+      <!-- Click globe to upload -->
+      <button
+        id="snowglobeButton"
+        class="globe-click"
+        aria-label="Upload a video"
+      ></button>
+
     </div>
 
-    <!-- Hidden file picker -->
-    <input type="file"
-           id="upload"
-           accept="video/*,.mov">
+    <!-- Hidden video upload -->
+    <input
+      type="file"
+      id="upload"
+      accept="video/*,.mov"
+    >
 
-    <label for="rotation">Rotate:</label>
-    <select id="rotation">
-      <option value="0">Normal</option>
-      <option value="90">90° clockwise</option>
-      <option value="180">180°</option>
-      <option value="270">90° counterclockwise</option>
-    </select>
+    <!-- Rotation controls -->
+    <div class="rotation-controls">
+      <label for="rotation">Rotate:</label>
+
+      <select id="rotation">
+        <option value="0">Normal</option>
+        <option value="90">90° clockwise</option>
+        <option value="180">180°</option>
+        <option value="270">90° counterclockwise</option>
+      </select>
+    </div>
 
     <p id="status">Click the snow globe to upload a video!</p>
 
-    <!-- Choose 3 photos -->
+    <!-- Select 3 of 10 suggested frames -->
     <div id="selectionArea" hidden>
       <h2>Choose your 3 favorite moments!</h2>
       <p id="counter">0 / 3 selected</p>
@@ -68,7 +87,7 @@
       <button id="done" disabled>Done!</button>
     </div>
 
-    <!-- Save completed globe -->
+    <!-- Completed snow globe actions -->
     <div id="finalArea" hidden>
       <h2>Your frozen moments! ❄️</h2>
 
@@ -101,10 +120,12 @@
     let selected = [];
     let processing = false;
 
-    // Click the snow globe to upload a video
-    globeButton.onclick = () => upload.click();
+    // Click globe to open file picker
+    globeButton.onclick = () => {
+      upload.click();
+    };
 
-    // Sharpness: variance of the Laplacian
+    // Calculate Laplacian variance sharpness
     function sharpness(ctx, width, height) {
       const pixels = ctx.getImageData(
         0, 0, width, height
@@ -142,11 +163,13 @@
         }
       }
 
+      if (count === 0) return 0;
+
       const mean = sum / count;
       return sumSquares / count - mean * mean;
     }
 
-    // Crop frame to a centered square with rotation
+    // Draw centered square frame with rotation
     function drawSquare(video, ctx, canvas) {
       const width = video.videoWidth;
       const height = video.videoHeight;
@@ -155,17 +178,23 @@
       const cropX = (width - size) / 2;
       const cropY = (height - size) / 2;
 
-      const angle = Number(rotation.value) * Math.PI / 180;
+      const angle =
+        Number(rotation.value) * Math.PI / 180;
 
       ctx.save();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.translate(
+        canvas.width / 2,
+        canvas.height / 2
+      );
+
       ctx.rotate(angle);
 
       ctx.drawImage(
         video,
-        cropX, cropY, size, size,
+        cropX, cropY,
+        size, size,
         -canvas.width / 2,
         -canvas.height / 2,
         canvas.width,
@@ -175,7 +204,7 @@
       ctx.restore();
     }
 
-    // Seek to a timestamp
+    // Seek to a specific video timestamp
     function seek(video, time) {
       return new Promise((resolve, reject) => {
         const onSeeked = () => {
@@ -200,6 +229,7 @@
       });
     }
 
+    // Process uploaded video
     async function processVideo() {
       const file = upload.files[0];
       if (!file || processing) return;
@@ -216,6 +246,7 @@
       finalArea.hidden = true;
 
       updateGlobe();
+
       status.textContent = "Finding your best moments...";
 
       const video = document.createElement("video");
@@ -230,22 +261,28 @@
 
         await new Promise((resolve, reject) => {
           video.onloadedmetadata = resolve;
-          video.onerror = () =>
+
+          video.onerror = () => {
             reject(new Error("Cannot load video"));
+          };
         });
 
         const duration = video.duration;
+
         const size = Math.min(
           video.videoWidth,
           video.videoHeight
         );
 
-        if (!Number.isFinite(duration) ||
-            duration <= 0 || size <= 0) {
+        if (
+          !Number.isFinite(duration) ||
+          duration <= 0 ||
+          size <= 0
+        ) {
           throw new Error("Invalid video");
         }
 
-        // Small canvas to measure sharpness
+        // Low-resolution sharpness canvas
         const scoreCanvas = document.createElement("canvas");
         scoreCanvas.width = 256;
         scoreCanvas.height = 256;
@@ -254,19 +291,21 @@
           willReadFrequently: true
         });
 
-        // Large canvas for final images
+        // High-resolution image canvas
         const fullCanvas = document.createElement("canvas");
         fullCanvas.width = size;
         fullCanvas.height = size;
 
         const fullCtx = fullCanvas.getContext("2d");
+
         const frames = [];
 
-        // Sample 30 frames
+        // Analyze 30 frames
         for (let i = 0; i < 30; i++) {
           const time = duration * (i + 1) / 31;
 
           await seek(video, time);
+
           drawSquare(video, scoreCtx, scoreCanvas);
 
           frames.push({
@@ -275,17 +314,19 @@
           });
         }
 
-        // Sharpest first
+        // Sort sharpest first
         frames.sort((a, b) => b.score - a.score);
 
         const chosen = [];
 
-        // Prefer frames spaced apart
+        // Choose 10 time-separated frames
         for (const frame of frames) {
-          if (chosen.every(other =>
+          const farEnough = chosen.every(other =>
             Math.abs(other.time - frame.time) >=
             duration * 0.06
-          )) {
+          );
+
+          if (farEnough) {
             chosen.push(frame);
           }
 
@@ -295,14 +336,19 @@
         // Fill remaining slots if needed
         for (const frame of frames) {
           if (chosen.length === 10) break;
-          if (!chosen.includes(frame)) chosen.push(frame);
+
+          if (!chosen.includes(frame)) {
+            chosen.push(frame);
+          }
         }
 
+        // Chronological order
         chosen.sort((a, b) => a.time - b.time);
 
-        // Extract final 10 images in high resolution
+        // Extract 10 full-quality photos
         for (const frame of chosen) {
           await seek(video, frame.time);
+
           drawSquare(video, fullCtx, fullCanvas);
 
           candidates.push({
@@ -322,13 +368,14 @@
 
       } finally {
         URL.revokeObjectURL(url);
+
         upload.disabled = false;
         rotation.disabled = false;
         processing = false;
       }
     }
 
-    // Display 10 clickable images
+    // Display 10 image choices
     function displayGallery() {
       gallery.innerHTML = "";
 
@@ -347,11 +394,13 @@
       updateSelection();
     }
 
+    // Select or deselect a photo
     function toggleFrame(index) {
       if (selected.includes(index)) {
         selected = selected.filter(i => i !== index);
       } else {
         if (selected.length >= 3) return;
+
         selected.push(index);
       }
 
@@ -359,7 +408,7 @@
       updateGlobe();
     }
 
-    // Place selected photos inside the globe
+    // Put three selected images in globe holes
     function updateGlobe() {
       const holes = [
         document.getElementById("hole1"),
@@ -378,6 +427,7 @@
       });
     }
 
+    // Update selected borders and Done button
     function updateSelection() {
       const images = gallery.querySelectorAll("img");
 
@@ -392,29 +442,30 @@
       done.disabled = selected.length !== 3;
     }
 
-    // Finalize the globe
+    // Finish selecting photos
     done.onclick = () => {
       if (selected.length !== 3) return;
 
       updateGlobe();
 
-      // Hide the 10 candidate images
+      // Hide candidate gallery
       selectionArea.hidden = true;
 
-      // Show save controls
+      // Show save actions
       finalArea.hidden = false;
 
       status.textContent = "Your moments are frozen!";
     };
 
-    // Choose different photos
+    // Go back to frame selection
     back.onclick = () => {
       finalArea.hidden = true;
       selectionArea.hidden = false;
+
       status.textContent = "Pick your favorite 3!";
     };
 
-    // Save the actual globe as a snapshot
+    // Save completed globe
     saveButton.onclick = async () => {
       if (selected.length !== 3) return;
 
@@ -426,29 +477,33 @@
           throw new Error("Screenshot library did not load.");
         }
 
-        // Wait for the three globe images to be ready
+        // Wait for photos and globe artwork
         await Promise.all(
-          ["hole1", "hole2", "hole3"].map(id => {
-            const img = document.getElementById(id);
-            return img.decode();
-          })
+          ["hole1", "hole2", "hole3"].map(id =>
+            document.getElementById(id).decode()
+          )
         );
 
-        // Capture the globe only
+        await document.querySelector(".globe-art").decode();
+
+        // Capture globe image
         const screenshot = await html2canvas(globe, {
           backgroundColor: null,
           scale: 1,
           useCORS: true
         });
 
-        // Resize to save browser storage
+        // Resize for browser storage
         const canvas = document.createElement("canvas");
+
         canvas.width = 420;
         canvas.height = Math.round(
           420 * screenshot.height / screenshot.width
         );
 
-        canvas.getContext("2d").drawImage(
+        const ctx = canvas.getContext("2d");
+
+        ctx.drawImage(
           screenshot,
           0, 0,
           canvas.width,
@@ -457,28 +512,33 @@
 
         const image = canvas.toDataURL("image/png");
 
+        // Read saved memories
         const memories = JSON.parse(
           localStorage.getItem("flurryMemories") || "[]"
         );
 
+        // Add new globe
         memories.push({
           id: Date.now(),
-          image: image,
+          image,
           createdAt: new Date().toISOString()
         });
 
+        // Save in browser
         localStorage.setItem(
           "flurryMemories",
           JSON.stringify(memories)
         );
 
-        // Go to the shelf
+        // Open shelf page
         window.location.href = "./shelf.html";
 
       } catch (error) {
         console.error(error);
-        status.textContent = "Could not save the snow globe.";
+
+        status.textContent = "Could not save snow globe.";
         alert(error.message);
+
         saveButton.disabled = false;
       }
     };
@@ -486,7 +546,7 @@
     upload.addEventListener("change", processVideo);
     rotation.addEventListener("change", processVideo);
 
-    // Falling snow
+    // Falling snow animation
     for (let i = 0; i < 60; i++) {
       const snowflake = document.createElement("div");
       snowflake.className = "snowflake";
@@ -497,9 +557,11 @@
       snowflake.style.width = size + "px";
       snowflake.style.height = size + "px";
       snowflake.style.left = Math.random() * 100 + "vw";
+
       snowflake.style.animationDuration = duration + "s";
       snowflake.style.animationDelay =
         -Math.random() * duration + "s";
+
       snowflake.style.opacity =
         Math.random() * 0.5 + 0.5;
 
