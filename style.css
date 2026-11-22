@@ -8,10 +8,12 @@
 
 .kranky-regular {
   font-family: 'Kranky', serif;
+  font-weight: 400;
+  font-style: normal;
 }
 
 
-/* GENERAL PAGE */
+/* GENERAL */
 
 * {
   box-sizing: border-box;
@@ -48,7 +50,9 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 20px;
+
+  padding: 8px 16px;
+  gap: 0;
 }
 
 [hidden] {
@@ -58,38 +62,52 @@ main {
 
 /* CUSTOM CURSORS */
 
-button, a, select, input, label,
-.globe-click, #gallery .photo,
+button,
+a,
+select,
+input,
+label,
+.globe-click,
+#gallery .photo,
 .saved-globe {
   cursor: url('./images/mitten.png') 0 0, pointer;
 }
 
-button, input, select {
+button:disabled {
+  cursor: not-allowed;
+}
+
+button,
+input,
+select {
   font-family: 'Crafty Girls', cursive;
 }
 
 
-/* FLURRY LOGO */
+/* HOMEPAGE */
+
+.home-page main {
+  justify-content: flex-start;
+}
+
+/* Bigger logo at top */
 
 .site-title {
-  width: 300px;
-  max-width: 80vw;
+  width: 360px;
+  max-width: 75vw;
   height: auto;
+
   display: block;
-  margin: 5px auto;
+  margin: 0 auto 2px;
 }
 
-main > p:first-of-type {
-  margin: 4px 0 10px;
-}
-
-
-/* MY SHELF NAVIGATION BUTTON */
+/* Shelf button directly below logo */
 
 .shelf-button {
   display: inline-block;
-  padding: 10px 20px;
-  margin: 5px auto;
+
+  padding: 7px 20px;
+  margin: 4px auto;
 
   background-color: #b8d9ee;
   color: #4b6478;
@@ -109,15 +127,23 @@ main > p:first-of-type {
   background-color: #cce7f7;
 }
 
+/* Tagline */
+
+.tagline {
+  margin: 8px 0 5px;
+  font-size: 17px;
+}
+
 
 /* SNOW GLOBE */
 
 .globe {
   position: relative;
-  width: min(55vh, 480px, 85vw);
-  aspect-ratio: 830 / 961;
-  margin: 5px auto;
 
+  width: min(44vh, 410px, 80vw);
+  aspect-ratio: 830 / 961;
+
+  margin: 0 auto;
   overflow: hidden;
   flex-shrink: 0;
 
@@ -128,10 +154,12 @@ main > p:first-of-type {
   transform: scale(1.02);
 }
 
-/* Original snowglobe image */
+
+/* ORIGINAL SNOW GLOBE ARTWORK */
 
 .globe-art {
   position: absolute;
+
   width: 246.75%;
   height: auto;
   max-width: none;
@@ -143,7 +171,8 @@ main > p:first-of-type {
   pointer-events: none;
 }
 
-/* Images behind transparent holes */
+
+/* PHOTOS IN THE GLOBE */
 
 .globe-photo {
   position: absolute;
@@ -152,11 +181,12 @@ main > p:first-of-type {
   z-index: 1;
 }
 
-/* Upper-left hole */
+/* Upper left */
 
 .hole1 {
   left: 11%;
   top: 13%;
+
   width: 40%;
   height: 35%;
 
@@ -164,11 +194,12 @@ main > p:first-of-type {
   transform-origin: center;
 }
 
-/* Upper-right hole */
+/* Upper right */
 
 .hole2 {
   left: 51.2%;
   top: 28.1%;
+
   width: 36.5%;
   height: 31.5%;
 
@@ -176,11 +207,12 @@ main > p:first-of-type {
   transform-origin: center;
 }
 
-/* Bottom hole */
+/* Bottom */
 
 .hole3 {
   left: 25.9%;
   top: 50.36%;
+
   width: 21.56%;
   height: 18.63%;
 
@@ -188,11 +220,13 @@ main > p:first-of-type {
   transform-origin: center;
 }
 
-/* Clickable globe overlay */
+
+/* CLICKABLE SNOW GLOBE */
 
 .globe-click {
   position: absolute;
   inset: 0;
+
   width: 100%;
   height: 100%;
 
@@ -210,13 +244,31 @@ main > p:first-of-type {
   display: none;
 }
 
+
+/* ROTATION CONTROLS */
+
+.rotation-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  margin: 3px auto;
+}
+
+.rotation-controls label {
+  font-size: 15px;
+}
+
 #rotation {
-  margin: 5px;
-  font-size: 16px;
+  margin: 0;
+  font-size: 14px;
+  padding: 3px;
 }
 
 #status {
-  margin: 5px 0;
+  margin: 3px 0;
+  font-size: 14px;
 }
 
 
@@ -225,31 +277,39 @@ main > p:first-of-type {
 #selectionArea {
   width: 100%;
   max-width: 700px;
-  margin: 0 auto;
+
+  margin: 3px auto;
 }
 
 #selectionArea h2 {
   font-size: 18px;
-  margin: 5px 0;
+  margin: 4px 0;
 }
 
 #counter {
-  margin: 4px 0;
+  margin: 3px 0;
 }
+
+
+/* TEN FRAMES */
 
 #gallery {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
+
   gap: 5px;
 
   width: 100%;
   max-width: 650px;
+
   margin: 5px auto;
 }
 
 #gallery .photo {
   width: 100%;
+  height: auto;
   aspect-ratio: 1;
+
   object-fit: cover;
 
   margin: 0;
@@ -264,12 +324,15 @@ main > p:first-of-type {
 
 /* ACTION BUTTONS */
 
-#done, #back, #saveSnowglobe {
+#done,
+#back,
+#saveSnowglobe {
   padding: 8px 18px;
-  margin: 8px;
+  margin: 6px;
 
   border: 2px solid white;
   border-radius: 12px;
+
   background: #b8d9ee;
   color: #4b6478;
 
@@ -282,30 +345,21 @@ main > p:first-of-type {
 }
 
 
-/* FINAL SELECTION */
+/* COMPLETED GLOBE */
 
 #finalArea {
   width: 100%;
 }
 
-#finalFrames {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
+#finalArea h2 {
+  margin: 5px 0;
+  font-size: 18px;
 }
 
-#finalFrames img {
-  width: 180px;
-  height: 180px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-/* Shrink globe while picking photos */
+/* Smaller globe while picking frames */
 
 body:has(#selectionArea:not([hidden])) .globe {
-  width: min(33vh, 290px, 65vw);
+  width: min(27vh, 240px, 55vw);
 }
 
 
@@ -317,6 +371,7 @@ body:has(#selectionArea:not([hidden])) .globe {
 
   background: white;
   border-radius: 50%;
+
   pointer-events: none;
   z-index: 100;
 
@@ -334,21 +389,36 @@ body:has(#selectionArea:not([hidden])) .globe {
 }
 
 
-/* ==================================
-   MY SHELF PAGE
-   ================================== */
+/* -------------------------
+   SHELF PAGE
+   ------------------------- */
 
-/* Shelf illustration displays only once,
-   without stretching or cropping. */
+/* Shelf heading */
+
+main:has(.shelf-container) {
+  padding-top: 8px;
+}
+
+main:has(.shelf-container) h1 {
+  margin: 5px auto;
+  font-size: 30px;
+}
+
+main:has(.shelf-container) .shelf-button {
+  margin: 4px auto;
+  padding: 6px 16px;
+}
+
+/* Original shelf artwork */
 
 .shelf-container {
   position: relative;
 
-  width: min(1100px, 95vw);
-  height: min(55vw, 600px);
-  min-height: 300px;
+  width: min(1000px, 94vw);
+  height: min(65vh, 620px);
+  min-height: 0;
 
-  margin: 20px auto;
+  margin: 8px auto;
 
   background-image: url('./images/shelf.png');
   background-repeat: no-repeat;
@@ -356,36 +426,44 @@ body:has(#selectionArea:not([hidden])) .globe {
   background-size: contain;
 }
 
-/* Miniature saved snowglobes */
+/* Saved globes on top shelf */
 
 .shelf-items {
   position: absolute;
 
-  left: 12%;
-  right: 12%;
-  bottom: 14%;
+  left: 15%;
+  right: 15%;
+  top: 8%;
+  height: 20%;
+  bottom: auto;
 
   display: flex;
+  flex-wrap: nowrap;
   justify-content: center;
   align-items: flex-end;
-  flex-wrap: wrap;
-  gap: 20px;
+
+  gap: 16px;
 }
 
+/* Small saved snow globes */
+
 .saved-globe {
-  width: 140px;
+  width: clamp(65px, 11vw, 130px);
   max-width: 22%;
   height: auto;
 
   object-fit: contain;
+  flex-shrink: 1;
+
   transition: transform 0.2s ease;
 }
 
 .saved-globe:hover {
-  transform: scale(1.1);
+  transform: scale(1.08);
 }
 
-/* Full-screen memory viewer */
+
+/* ZOOMED MEMORY VIEWER */
 
 .memory-viewer {
   position: fixed;
@@ -416,23 +494,27 @@ body:has(#selectionArea:not([hidden])) .globe {
 }
 
 
-/* SHORT DESKTOP SCREENS */
+/* SHORT LAPTOP SCREENS */
 
 @media (max-height: 750px) {
+  .site-title {
+    width: 300px;
+  }
+
   .globe {
-    width: min(46vh, 400px, 80vw);
+    width: min(38vh, 340px, 75vw);
   }
 
   body:has(#selectionArea:not([hidden])) .globe {
-    width: min(27vh, 240px, 60vw);
+    width: min(25vh, 220px, 55vw);
   }
 
   #gallery {
     max-width: 480px;
   }
 
-  .site-title {
-    width: 260px;
+  .shelf-container {
+    height: min(60vh, 520px);
   }
 }
 
@@ -449,30 +531,35 @@ body:has(#selectionArea:not([hidden])) .globe {
   }
 
   .globe {
-    width: min(80vw, 400px);
+    width: min(75vw, 400px);
   }
 
   body:has(#selectionArea:not([hidden])) .globe {
-    width: min(55vw, 260px);
+    width: min(45vw, 220px);
   }
 
   #gallery {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .rotation-controls {
+    flex-wrap: wrap;
+  }
+
   .shelf-container {
     width: 96vw;
     height: 350px;
-    min-height: 0;
   }
 
   .shelf-items {
-    gap: 8px;
+    left: 10%;
+    right: 10%;
+    gap: 7px;
   }
 
   .saved-globe {
-    width: 80px;
-    max-width: 25%;
+    width: 70px;
+    max-width: 24%;
   }
 }
 
