@@ -71,7 +71,8 @@ label,
 .globe-click,
 #gallery .photo,
 .saved-globe,
-.pager-link {
+.pager-link,
+.music-toggle {
   cursor: url('./images/cursors/mitten.png') 12 2, pointer;
 }
 
@@ -609,6 +610,88 @@ body:has(#selectionArea:not([hidden])) .globe {
 }
 
 
+/* BACKGROUND MUSIC: a little hand-drawn snowflake in the corner */
+.music-toggle {
+  position: fixed;
+  right: 12px;
+  bottom: 10px;
+  z-index: 150;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 2px 4px;
+
+  border: none;
+  background: none;
+  color: #6f7fa0;
+  font-size: 12px;
+  line-height: 1.1;
+}
+
+.music-flake {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 1px #8a93d6) drop-shadow(0 1px 1px rgba(75, 100, 120, 0.25));
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  opacity: 0.55;
+}
+
+.music-toggle.is-playing .music-flake {
+  opacity: 1;
+  animation: flake-spin 12s linear infinite;
+}
+
+.music-note {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: #f4a6c8;
+  font-size: 15px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.music-toggle.is-playing .music-note {
+  opacity: 1;
+  animation: note-bob 2.4s ease-in-out infinite;
+}
+
+.music-toggle:hover .music-flake,
+.music-toggle:focus-visible .music-flake {
+  transform: scale(1.12) rotate(-8deg);
+}
+
+.music-toggle:focus-visible {
+  outline: 2px dashed #f4a6c8;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+@keyframes flake-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes note-bob {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50%      { transform: translateY(-4px) rotate(6deg); }
+}
+
+@media (max-width: 600px) {
+  .music-toggle {
+    right: 6px;
+    bottom: 6px;
+  }
+
+  .music-flake {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+
 /* FALLING SNOW */
 
 .snowflake {
@@ -902,6 +985,11 @@ body:has(#selectionArea:not([hidden])) .globe {
   }
 
   .globe.is-wobbling {
+    animation: none;
+  }
+
+  .music-toggle.is-playing .music-flake,
+  .music-toggle.is-playing .music-note {
     animation: none;
   }
 }

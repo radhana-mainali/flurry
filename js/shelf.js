@@ -44,6 +44,9 @@ const shaker = new Flurry.ShakeGlobe(viewerGlobe, {
     // The button says what clicking it will do
     viewerSound.textContent = state.muted ? "turn sound on" : "mute sound";
     viewerSound.setAttribute("aria-pressed", String(state.muted));
+    // Let the video's own sound be heard: fade the background music
+    // while a clip plays with sound, bring it back afterwards
+    if (Flurry.music) Flurry.music.duck(state.playing && !state.muted);
   }
 });
 shaker.enabled = true;
