@@ -1,7 +1,9 @@
+
 body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    background-color: #def7ff;
 }
 
 main {
@@ -19,12 +21,6 @@ main {
     src: url('./fonts/TypewriterInked.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
-}
-body {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    background-color: rgb(219, 222, 255);
 }
 
 .site-title {
