@@ -11,10 +11,16 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-
-  background-color: #c9e2ff;
-  font-family: 'Crafty Girls', cursive;
   text-align: center;
+  font-family: 'Crafty Girls', cursive;
+
+  background: linear-gradient(
+    to bottom,
+    #c7cfff 0%,
+    #ffffff 100%
+  );
+
+  background-attachment: fixed;
 }
 
 main {
@@ -234,4 +240,16 @@ main {
 .globe:hover {
   transform: scale(1.02);
   transition: transform 0.2s;
+}
+
+
+/* Keep photos inside the snowglobe area */
+.globe {
+  overflow: hidden;
+}
+
+/* Crop the photos to their rectangular frames */
+.globe-photo {
+  object-fit: cover;
+  clip-path: inset(0 round 3%);
 }
