@@ -1026,14 +1026,6 @@ body:has(#finalArea:not([hidden])) #rotationControls {
   margin-top: 8px;
 }
 
-.memory-date {
-  margin: 6px 0 0;
-  color: white;
-  font-family: 'TypewriterInked', 'Courier New', monospace;
-  font-size: 17px;
-  letter-spacing: 1px;
-}
-
 .replay-note {
   margin: 4px 16px 0;
   color: #e6e9ff;
