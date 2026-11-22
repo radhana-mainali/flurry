@@ -220,13 +220,18 @@ Flurry.ShakeGlobe = class {
     this.H = 1;
 
     const resize = () => {
+      // Hidden globes (like the shelf viewer before it opens) have no size
+      // yet: wait until they're shown, or the snow lands in the wrong place
+      if (!this.el.clientWidth || !this.el.clientHeight) return;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      this.W = this.el.clientWidth || 1;
-      this.H = this.el.clientHeight || 1;
+      this.W = this.el.clientWidth;
+      this.H = this.el.clientHeight;
       this.canvas.width = Math.round(this.W * dpr);
       this.canvas.height = Math.round(this.H * dpr);
       this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       if (!this.flakes.length) this.makeFlakes();
+      // keep resting snow on the mound when the globe changes shape
+      this.flakes.forEach(f => { if (f.settled) this.restOnMound(f, false); });
       if (!this.active) this.draw();
     };
     resize();
@@ -241,6 +246,7 @@ Flurry.ShakeGlobe = class {
         r: 0.0032 + Math.random() * 0.0042,      // radius
         sink: 0.055 + Math.random() * 0.06,      // how fast it sinks
         phase: Math.random() * Math.PI * 2,
+        nest: 0.004 - Math.random() * 0.012,     // how deep it sits in the snow
         settled: true
       };
       this.restOnMound(f, true);
@@ -284,7 +290,7 @@ Flurry.ShakeGlobe = class {
       f.x = a + Math.random() * (b - a);
     }
     // nestle into the top of the snow, a little bit of it showing
-    f.y = this.moundY(f.x) + 0.004 - Math.random() * 0.012;
+    f.y = this.moundY(f.x) + f.nest;
     f.vx = f.vy = 0;
     f.settled = true;
   }

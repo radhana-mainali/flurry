@@ -8,7 +8,6 @@ const rows = [
 
 const viewer = document.getElementById("memoryViewer");
 const viewerGlobe = document.getElementById("viewerGlobe");
-const memoryDate = document.getElementById("memoryDate");
 const replayNote = document.getElementById("replayNote");
 const viewerShake = document.getElementById("viewerShake");
 
@@ -117,14 +116,6 @@ async function openMemory(memory, src) {
     });
     viewerGlobe.appendChild(stickerLayer);
   }
-
-  memoryDate.textContent = memory.date && memory.date.on && memory.date.text
-    ? memory.date.text
-    : memory.createdAt
-      ? new Date(memory.createdAt).toLocaleDateString(undefined, {
-          year: "numeric", month: "long", day: "numeric"
-        })
-      : "";
 
   replayNote.hidden = true;
   viewer.hidden = false;
