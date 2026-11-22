@@ -12,7 +12,40 @@
 
 
 
+upload.addEventListener("change", processVideo);
 
+// Save snowglobe as a PNG image
+const saveSnowglobe = document.getElementById("saveSnowglobe");
+
+saveSnowglobe.onclick = async () => {
+    const globe = document.getElementById("globe");
+
+    saveSnowglobe.disabled = true;
+    saveSnowglobe.textContent = "Saving your memories...";
+
+    try {
+        const canvas = await html2canvas(globe, {
+            backgroundColor: null,
+            scale: 2
+        });
+
+        const link = document.createElement("a");
+
+        link.download = "my-flurry-snowglobe.png";
+        link.href = canvas.toDataURL("image/png");
+
+        link.click();
+
+        saveSnowglobe.textContent = "Saved! ❄️";
+
+    } catch (error) {
+        console.error(error);
+        saveSnowglobe.textContent = "Oops! Try again";
+
+    } finally {
+        saveSnowglobe.disabled = false;
+    }
+};
 
 
 
