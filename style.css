@@ -389,82 +389,97 @@ body:has(#selectionArea:not([hidden])) .globe {
 }
 
 
-/* -------------------------
-   SHELF PAGE
-   ------------------------- */
 
-/* Shelf heading */
+/* MY SHELF PAGE */
 
-main:has(.shelf-container) {
-  padding-top: 8px;
+.shelf-page {
+  padding: 8px 15px;
+  gap: 4px;
 }
 
-main:has(.shelf-container) h1 {
-  margin: 5px auto;
-  font-size: 30px;
-}
-
-main:has(.shelf-container) .shelf-button {
+/* Custom title image */
+.shelf-title {
+  width: 320px;
+  max-width: 75vw;
+  height: auto;
+  display: block;
   margin: 4px auto;
-  padding: 6px 16px;
 }
 
-/* Original shelf artwork */
+/* Navigation and reset buttons */
+.shelf-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 4px auto;
+}
 
-.shelf-container {
+.shelf-actions .shelf-button {
+  margin: 0;
+  padding: 7px 15px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Shelf image and globe overlay */
+.shelf-stage {
   position: relative;
-
-  width: min(1000px, 94vw);
-  height: min(65vh, 620px);
-  min-height: 0;
-
+  width: min(900px, 94vw, 75vh);
   margin: 8px auto;
-
-  background-image: url('./images/shelf.png');
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
 }
 
-/* Saved globes on top shelf */
+/* Original shelf image, without cropping */
+.shelf-art {
+  display: block;
+  width: 100%;
+  height: auto;
+}
 
-.shelf-items {
+/* Shared positioning for all three rows */
+.shelf-row {
   position: absolute;
-
-  left: 15%;
-  right: 15%;
-  top: 8%;
-  height: 20%;
-  bottom: auto;
+  left: 12%;
+  width: 76%;
+  height: 23%;
 
   display: flex;
-  flex-wrap: nowrap;
   justify-content: center;
   align-items: flex-end;
-
-  gap: 16px;
+  gap: 3%;
 }
 
-/* Small saved snow globes */
+/* Each row ends at its wooden plank */
+.row-1 {
+  top: 1%;
+}
 
-.saved-globe {
-  width: clamp(65px, 11vw, 130px);
-  max-width: 22%;
-  height: auto;
+.row-2 {
+  top: 35%;
+}
 
+.row-3 {
+  top: 69%;
+}
+
+/* Miniature snow globes */
+.shelf-row .saved-globe {
+  width: auto;
+  height: 100%;
+  max-width: 30%;
+  max-height: 100%;
   object-fit: contain;
   flex-shrink: 1;
 
+  cursor: pointer;
   transition: transform 0.2s ease;
 }
 
-.saved-globe:hover {
+.shelf-row .saved-globe:hover {
   transform: scale(1.08);
 }
 
-
-/* ZOOMED MEMORY VIEWER */
-
+/* Full-screen enlarged memory */
 .memory-viewer {
   position: fixed;
   inset: 0;
@@ -472,8 +487,8 @@ main:has(.shelf-container) .shelf-button {
 
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 
   background: rgba(60, 55, 110, 0.8);
 }
@@ -487,10 +502,29 @@ main:has(.shelf-container) .shelf-button {
 .memory-viewer button {
   padding: 10px 20px;
   margin: 15px;
-
-  background: #b8d9ee;
   border: 2px solid white;
   border-radius: 12px;
+  background: #b8d9ee;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .shelf-title {
+    width: 240px;
+  }
+
+  .shelf-stage {
+    width: 96vw;
+  }
+
+  .shelf-actions {
+    gap: 6px;
+  }
+
+  .shelf-actions .shelf-button {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
 }
 
 
