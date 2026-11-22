@@ -1,3 +1,6 @@
+
+/* FONTS */
+
 @font-face {
   font-family: 'TypewriterInked';
   src: url('./fonts/TypewriterInked.ttf') format('truetype');
@@ -5,14 +8,28 @@
   font-style: normal;
 }
 
-/* Page */
+.kranky-regular {
+  font-family: "Kranky", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+
+/* PAGE BACKGROUND */
+
+html {
+  min-height: 100%;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  text-align: center;
+
   font-family: 'Crafty Girls', cursive;
+  text-align: center;
 
   background: linear-gradient(
     to bottom,
@@ -23,49 +40,264 @@ body {
   background-attachment: fixed;
 }
 
+
+/* MAIN LAYOUT */
+
 main {
   flex: 1;
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  padding: 10px 20px;
+  box-sizing: border-box;
 }
 
-/* Flurry title */
+[hidden] {
+  display: none !important;
+}
+
+
+/* FLURRY TITLE */
+
 .site-title {
-  width: 200px;
-  max-width: 80%;
+  width: 300px;
+  max-width: 80vw;
   height: auto;
+
   display: block;
-  margin: 20px auto;
+  margin: 5px auto;
 }
 
-/* Snowglobe button */
-.snowglobe-button {
-  display: block;
-  margin: 10px auto;
-  padding: 0;
+/* Tagline */
 
+main > p:first-of-type {
+  margin: 4px 0 10px;
+}
+
+
+/* SNOW GLOBE CONTAINER */
+
+.globe {
+  position: relative;
+
+  width: min(55vh, 480px, 85vw);
+  aspect-ratio: 830 / 961;
+
+  margin: 5px auto;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  transition: transform 0.2s ease;
+}
+
+.globe:hover {
+  transform: scale(1.02);
+}
+
+
+/* SNOW GLOBE ARTWORK */
+
+.globe-art {
+  position: absolute;
+
+  width: 246.75%;
+  height: auto;
+  max-width: none;
+
+  left: -71.57%;
+  top: -22.58%;
+
+  z-index: 2;
+  pointer-events: none;
+}
+
+
+/* PHOTOS INSIDE THE GLOBE */
+
+.globe-photo {
+  position: absolute;
+  display: none;
+  object-fit: cover;
+  z-index: 1;
+}
+
+/* Upper-left photo */
+
+.hole1 {
+  left: 11%;
+  top: 13%;
+
+  width: 40%;
+  height: 35%;
+
+  transform: rotate(-17deg);
+  transform-origin: center;
+}
+
+/* Upper-right photo */
+
+.hole2 {
+  left: 51.2%;
+  top: 28.1%;
+
+  width: 36.5%;
+  height: 31.5%;
+
+  transform: rotate(15deg);
+  transform-origin: center;
+}
+
+/* Lower-center photo */
+
+.hole3 {
+  left: 25.9%;
+  top: 50.36%;
+
+  width: 21.56%;
+  height: 18.63%;
+
+  transform: rotate(-7deg);
+  transform-origin: center;
+}
+
+
+/* CLICKABLE SNOW GLOBE */
+
+.globe-click {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  padding: 0;
   border: none;
   background: transparent;
 
   cursor: pointer;
+  z-index: 3;
 }
 
-/* Snowglobe image */
-.snowglobe-image {
-  width: 180px;
-  max-width: 65vw;
+
+/* VIDEO UPLOAD */
+
+#upload {
+  display: none;
+}
+
+
+/* ROTATION CONTROLS */
+
+#rotation {
+  margin: 5px;
+}
+
+#status {
+  margin: 5px 0;
+}
+
+
+/* PHOTO SELECTION AREA */
+
+#selectionArea {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+#selectionArea h2 {
+  font-size: 18px;
+  margin: 5px 0;
+}
+
+#counter {
+  margin: 4px 0;
+}
+
+
+/* TEN CANDIDATE PHOTOS */
+
+#gallery {
+  display: grid;
+
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+
+  gap: 5px;
+
+  width: 100%;
+  max-width: 650px;
+
+  margin: 5px auto;
+}
+
+#gallery .photo {
+  width: 100%;
   height: auto;
-  display: block;
-  margin: auto;
+  aspect-ratio: 1;
 
-  transition: transform 0.3s ease;
+  box-sizing: border-box;
+  object-fit: cover;
+
+  margin: 0;
+  border: 3px solid transparent;
+  border-radius: 8px;
+
+  cursor: pointer;
 }
 
-/* Snowglobe hover effect */
-.snowglobe-button:hover .snowglobe-image {
-  transform: scale(1.04);
+#gallery .photo.selected {
+  border-color: #8496ff;
 }
 
-/* Snowflakes */
+
+/* DONE BUTTON */
+
+#done,
+#back {
+  padding: 8px 18px;
+  margin: 8px;
+
+  cursor: pointer;
+}
+
+#done:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* FINAL AREA */
+
+#finalArea {
+  width: 100%;
+}
+
+#finalFrames {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+#finalFrames img {
+  width: 180px;
+  height: 180px;
+
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+
+/* SMALLER GLOBE DURING PHOTO SELECTION */
+
+body:has(#selectionArea:not([hidden])) .globe {
+  width: min(33vh, 290px, 65vw);
+}
+
+
+/* FALLING SNOW */
+
 .snowflake {
   position: fixed;
   top: -10px;
@@ -89,166 +321,66 @@ main {
   }
 }
 
-/* Photo selection gallery */
-#gallery,
-#finalFrames {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  margin: 20px auto;
-}
 
-/* Candidate photo */
-.photo {
-  width: 180px;
-  height: 180px;
-  object-fit: cover;
+/* SHORT DESKTOP SCREENS */
 
-  cursor: pointer;
-  margin: 5px;
-  border: 4px solid transparent;
-  border-radius: 8px;
-}
+@media (max-height: 750px) {
+  .globe {
+    width: min(46vh, 400px, 80vw);
+  }
 
-/* Selected photo */
-.photo.selected {
-  border-color: dodgerblue;
-}
+  body:has(#selectionArea:not([hidden])) .globe {
+    width: min(27vh, 240px, 60vw);
+  }
 
-/* Final images */
-#finalFrames img {
-  width: 250px;
-  height: 250px;
-  object-fit: cover;
-  border-radius: 8px;
-}
+  #gallery {
+    max-width: 480px;
+  }
 
-/* Buttons */
-#done,
-#back {
-  padding: 10px 20px;
-  cursor: pointer;
-}
-
-/* Disabled Done button */
-#done:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-/* Mobile sizing */
-@media (max-width: 600px) {
   .site-title {
-    width: 170px;
-  }
-
-  .snowglobe-image {
-    width: 150px;
-  }
-
-  .photo {
-    width: 130px;
-    height: 130px;
+    width: 260px;
   }
 }
 
-/* Accessibility: reduce animations when requested */
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+  main {
+    padding: 10px;
+  }
+
+  .site-title {
+    width: 230px;
+  }
+
+  .globe {
+    width: min(80vw, 400px);
+  }
+
+  body:has(#selectionArea:not([hidden])) .globe {
+    width: min(55vw, 260px);
+  }
+
+  #gallery {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  #selectionArea h2 {
+    font-size: 16px;
+  }
+}
+
+
+/* REDUCED MOTION */
+
 @media (prefers-reduced-motion: reduce) {
   .snowflake {
-    animation: none;
     display: none;
+    animation: none;
   }
 
-  .snowglobe-image {
+  .globe {
     transition: none;
   }
-}
-
-/* Visible snow globe area */
-.globe {
-  position: relative;
-  width: min(90vw, 560px);
-  aspect-ratio: 830 / 961;
-  margin: 20px auto;
-  overflow: hidden;
-}
-
-/* Original PNG, positioned to hide transparent padding */
-.globe-art {
-  position: absolute;
-  width: 246.75%;
-  height: auto;
-  max-width: none;
-  left: -71.57%;
-  top: -22.58%;
-  z-index: 2;
-  pointer-events: none;
-}
-
-/* Photos go underneath the PNG */
-.globe-photo {
-  position: absolute;
-  display: none;
-  object-fit: cover;
-  z-index: 1;
-}
-
-/* Upper left hole */
-.hole1 {
-  left: 11%;
-  top: 13%;
-  width: 40%;
-  height: 35%;
-  transform: rotate(-17deg);
-}
-
-/* Upper right hole */
-.hole2 {
-  left: 51.2%;
-  top: 28.1%;
-  width: 36.5%;
-  height: 31.5%;
-  transform: rotate(15deg);
-  transform-origin: center;
-}
-
-/* Lower center hole */
-.hole3 {
-  left: 25.9%;
-  top: 50.36%;
-  width: 21.56%;
-  height: 18.63%;
-  transform: rotate(-7deg);
-  transform-origin: center;
-}
-
-/* Invisible clickable area */
-.globe-click {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  z-index: 3;
-}
-
-/* Make globe interactive */
-.globe:hover {
-  transform: scale(1.02);
-  transition: transform 0.2s;
-}
-
-
-/* Keep photos inside the snowglobe area */
-.globe {
-  overflow: hidden;
-}
-
-/* Crop the photos to their rectangular frames */
-.globe-photo {
-  object-fit: cover;
-  clip-path: inset(0 round 3%);
 }
