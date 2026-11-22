@@ -9,12 +9,33 @@
   <link href="https://fonts.googleapis.com/css2?family=Crafty+Girls&family=Kranky&display=swap" rel="stylesheet">
 
   <style>
-    h1 {
-      font-family: 'Kranky', serif;
-    }
-
     body {
       font-family: 'Crafty Girls', cursive;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background-color: #dcf6ff;
+    }
+
+    h1 {
+      font-family: 'Kranky', serif;
+      text-align: center;
+    }
+
+    main {
+      flex: 1;
+    }
+
+    #frames {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    #frames img {
+      object-fit: cover;
+      border-radius: 8px;
     }
 
     .photo {
