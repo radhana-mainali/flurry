@@ -194,6 +194,8 @@ main {
   top: 11.24%;
   width: 43.98%;
   height: 38.08%;
+  transform: rotate(-17deg);
+  transform-origin: center;
 }
 
 /* Upper right hole */
@@ -202,6 +204,8 @@ main {
   top: 28.1%;
   width: 36.5%;
   height: 31.5%;
+  transform: rotate(15deg);
+  transform-origin: center;
 }
 
 /* Lower center hole */
@@ -210,6 +214,8 @@ main {
   top: 50.36%;
   width: 21.56%;
   height: 18.63%;
+  transform: rotate(-7deg);
+  transform-origin: center;
 }
 
 /* Invisible clickable area */
