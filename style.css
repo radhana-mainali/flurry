@@ -394,8 +394,26 @@ select {
     font-size: 18px;
 }
 
+/* BUTTON FONTS */
+button, input, select {
+  font-family: 'Crafty Girls', cursive;
+}
+
+input[type="file"], select {
+  font-size: 18px;
+}
+
+/* CUSTOM CURSORS */
 body {
-    cursor: pointer;
+    cursor: url('./images/wand.png') 0 0, auto;
+}
+
+button, a, select, input, label, .globe-click, #gallery .photo {
+  cursor: url('./images/mitten.png') 0 0, pointer;
+}
+
+button:disabled {
+  cursor: url('./images/wand.png') 0 0, auto;
 }
 
 body {
