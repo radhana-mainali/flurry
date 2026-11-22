@@ -117,6 +117,14 @@ async function openMemory(memory, src) {
     viewerGlobe.appendChild(stickerLayer);
   }
 
+  // The memory's name on its plate (older globes have no name)
+  if (!memory.legacy && memory.name) {
+    const plate = Flurry.nameplateElement(memory.name);
+    plate.dataset.layer = "memory";
+    viewerGlobe.appendChild(plate);
+  }
+  viewer.setAttribute("aria-label", memory.name || "Snow globe");
+
   replayNote.hidden = true;
   viewer.hidden = false;
   document.getElementById("closeViewer").focus();
@@ -180,7 +188,8 @@ function displayShelf() {
 
     const img = document.createElement("img");
     img.src = src;
-    img.alt = "Saved snow globe " + (start + index + 1);
+    img.alt = memory.name || "Saved snow globe " + (start + index + 1);
+    if (memory.name) img.title = memory.name;
     img.className = "saved-globe";
     img.tabIndex = 0;
     img.setAttribute("role", "button");

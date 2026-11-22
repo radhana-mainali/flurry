@@ -109,24 +109,43 @@
     <!-- Completed snow globe actions -->
     <div id="finalArea" hidden>
 
-      <!-- A label on pink tape: the date to start with, but you can
-           write anything -->
-      <div class="decorate-row">
-        <label class="date-toggle">
-          <input type="checkbox" id="dateOn" checked>
-          add a label
-        </label>
-        <input type="text" id="dateText" maxlength="22"
-               aria-label="Label text" spellcheck="false">
+      <!-- Step 1: decorate (label, stickers, shake) -->
+      <div id="decorateStep">
+        <!-- A label on pink tape: the date to start with, but you can
+             write anything -->
+        <div class="decorate-row">
+          <label class="date-toggle">
+            <input type="checkbox" id="dateOn" checked>
+            add a label
+          </label>
+          <input type="text" id="dateText" maxlength="22"
+                 aria-label="Label text" spellcheck="false">
+        </div>
+
+        <div class="decorate-row">
+          <button id="shakeButton" class="soft-button">Shake</button>
+          <button id="nameNext" class="soft-button">Next: Name It</button>
+          <button id="back" class="soft-button">Choose Again</button>
+        </div>
+
+        <p class="hint" id="shakeHint">peel a sticker onto the globe, or drag the globe side to side to shake it!</p>
       </div>
 
-      <div class="decorate-row">
-        <button id="shakeButton" class="soft-button">Shake</button>
-        <button id="saveSnowglobe" class="soft-button">Save to My Shelf</button>
-        <button id="back" class="soft-button">Choose Again</button>
-      </div>
+      <!-- Step 2: name it (shown on a little plate on the base), then save -->
+      <div id="nameStep" hidden>
+        <div class="decorate-row">
+          <label for="memoryName" class="name-label">name your snow globe</label>
+          <input type="text" id="memoryName" maxlength="30"
+                 placeholder="Untitled Memory" autocomplete="off">
+        </div>
 
-      <p class="hint" id="shakeHint">peel a sticker onto the globe, or drag the globe side to side to shake it!</p>
+        <div class="decorate-row">
+          <button id="saveSnowglobe" class="soft-button">Add to My Shelf</button>
+          <button id="backToDecorate" class="soft-button">Back to Decorating</button>
+        </div>
+
+        <p class="hint">it goes on the little nameplate on the base</p>
+      </div>
     </div>
   </main>
 

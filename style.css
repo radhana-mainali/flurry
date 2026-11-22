@@ -556,6 +556,52 @@ select {
   opacity: 0.4;
 }
 
+/* Naming the snow globe: a handwritten line, like the label */
+.name-label {
+  font-size: 15px;
+  color: #4b6478;
+}
+
+#memoryName {
+  width: 15em;
+  max-width: 82vw;
+  padding: 0 8px 1px;
+  border: none;
+  border-bottom: 2px dashed #f4a6c8;
+  background: transparent;
+  color: #8a4a6b;
+  font-size: 15px;
+  line-height: 1.3;
+  text-align: center;
+}
+
+#memoryName::placeholder {
+  color: #8a4a6b;
+  opacity: 0.45;
+}
+
+#memoryName:focus {
+  outline: none;
+  border-bottom-style: solid;
+}
+
+/* The name on its little plate on the base (drawn on a canvas so it
+   matches the saved picture). Above the stickers so it's always readable. */
+.nameplate {
+  position: absolute;
+  z-index: 7;
+  pointer-events: none;
+}
+
+.nameplate.is-new {
+  animation: plate-in 0.45s ease-out both;
+}
+
+@keyframes plate-in {
+  from { opacity: 0; transform: translateY(6%) scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+
 .hint {
   margin: 2px 0 0;
   font-size: 13px;
@@ -847,6 +893,78 @@ body:has(#finalArea:not([hidden])) #rotationControls {
 
 /* MY SHELF PAGE */
 
+/* The room behind the shelf (images/background.png), filling the screen
+   like background-size: cover. The fire, its glow and the window snow are
+   placed in fractions of the drawing, so they stay put at any size. */
+.shelf-body {
+  --room-w: max(100vw, calc(100dvh * 2360 / 1640));
+  --room-h: calc(var(--room-w) * 1640 / 2360);
+  background: #bfa684;
+}
+
+.room {
+  position: fixed;
+  z-index: 0;
+  width: var(--room-w);
+  height: var(--room-h);
+  left: calc((100vw - var(--room-w)) * 0.5);
+  top: calc((100dvh - var(--room-h)) * 0.8);
+  pointer-events: none;
+}
+
+.room-bg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The team's fire, burning on the logs */
+.room-fire {
+  position: absolute;
+  left: 73.5%;
+  top: 66.1%;
+  width: 14%;
+  height: auto;
+}
+
+/* Warm light flickering round the fireplace */
+.room-glow {
+  position: absolute;
+  left: 64%;
+  top: 56%;
+  width: 33%;
+  height: 42%;
+  background: radial-gradient(closest-side, rgba(255, 176, 90, 0.5), rgba(255, 140, 60, 0.16) 55%, transparent);
+  mix-blend-mode: screen;
+  animation: fire-glow 2.6s ease-in-out infinite;
+}
+
+@keyframes fire-glow {
+  0%, 100% { opacity: 0.75; }
+  20%      { opacity: 1; }
+  35%      { opacity: 0.8; }
+  55%      { opacity: 0.95; }
+  75%      { opacity: 0.68; }
+}
+
+/* The night outside, with snow falling (drawn by js/shelf-room.js).
+   It sits behind the drawing and shows through the window glass. */
+.room-snow {
+  position: absolute;
+  left: 34.5%;
+  top: 21.5%;
+  width: 21.5%;
+  height: 31%;
+  background: linear-gradient(to bottom, #1f2550, #353d78);
+}
+
+.shelf-body .shelf-page {
+  position: relative;
+  z-index: 1;
+}
+
 .shelf-page {
   padding: 6px 15px;
   gap: 4px;
@@ -1032,6 +1150,35 @@ body:has(#finalArea:not([hidden])) #rotationControls {
   font-size: 14px;
 }
 
+/* Wide screens: the shelf hangs on the empty wall on the left */
+@media (min-width: 901px) and (min-aspect-ratio: 3/2) {
+  .shelf-page {
+    /* as big as fits between the left edge and the window */
+    --wall: calc((100vw - var(--room-w)) * 0.5 + var(--room-w) * 0.345 - 1vw - 15px);
+    --shelf-col: min(600px, var(--wall), calc((100dvh - 135px) * 1038 / 1216));
+    align-self: flex-start;
+    width: calc(var(--shelf-col) + 30px);
+    margin-left: 1vw;
+  }
+
+  .shelf-page:has(.shelf-pager:not([hidden])) {
+    --shelf-col: min(600px, var(--wall), calc((100dvh - 172px) * 1038 / 1216));
+  }
+
+  .shelf-page .shelf-stage,
+  .shelf-page:has(.shelf-pager:not([hidden])) .shelf-stage {
+    width: var(--shelf-col);
+  }
+}
+
+/* Narrow screens: the shelf fills the middle; slide the room so the
+   fireplace peeks out on the right */
+@media (max-width: 900px), (max-aspect-ratio: 3/2) {
+  .room {
+    left: calc((100vw - var(--room-w)) * 0.86);
+  }
+}
+
 /* Mobile */
 @media (max-width: 600px) {
   .shelf-title {
@@ -1115,6 +1262,8 @@ body:has(#finalArea:not([hidden])) #rotationControls {
 
   .float-item,
   .float-bob,
+  .room-glow,
+  .nameplate.is-new,
   .globe-sticker.just-stuck,
   .saved-globe.just-saved {
     animation: none;

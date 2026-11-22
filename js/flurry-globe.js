@@ -67,7 +67,8 @@ function drawCover(ctx, img, boxW, boxH) {
 // photos: three loaded <img> elements (already rotated the right way up)
 // stickers: [{ id, x, y, width, rotate }] in globe fractions (x/y = centre)
 // date: { on, text } or null
-Flurry.composeGlobe = async function ({ photos, stickers = [], date = null }, scale = 1) {
+// name: the memory's name for the nameplate, or "" (older globes)
+Flurry.composeGlobe = async function ({ photos, stickers = [], date = null, name = "" }, scale = 1) {
   const G = Flurry.GLOBE;
   const W = Math.round(G.width * scale);
   const H = Math.round(G.height * scale);
@@ -117,6 +118,133 @@ Flurry.composeGlobe = async function ({ photos, stickers = [], date = null }, sc
     ctx.restore();
   }
 
+  // 5. The name on its little plate, on the base (always readable)
+  if (name) await Flurry.drawNameplate(ctx, name, W, H);
+
+  return canvas;
+};
+
+// ---------- the nameplate ----------
+
+// A little handwritten plate on the pink base. It grows with the name and
+// wraps onto two lines if it's long. x / y = centre, maxWidth = widest the
+// plate gets (fractions of the globe). box = the area it can ever cover,
+// well below the glass, so it never sits on the photos.
+Flurry.NAMEPLATE = {
+  x: 0.48, y: 0.885, maxWidth: 0.62, rotate: -2,
+  box: { left: 0.12, top: 0.79, width: 0.72, height: 0.19 }
+};
+Flurry.NAME_FONT = '"Crafty Girls", cursive';
+Flurry.DEFAULT_NAME = "Untitled Memory";
+Flurry.MAX_NAME = 30;
+
+// Tidy what was typed: one line, single spaces, at most 30 characters
+Flurry.cleanName = function (text) {
+  return String(text || "").replace(/\s+/g, " ").trim().slice(0, Flurry.MAX_NAME).trim();
+};
+
+Flurry.drawNameplate = async function (ctx, name, W, H) {
+  const P = Flurry.NAMEPLATE;
+  const font = size => `${size}px ${Flurry.NAME_FONT}`;
+  try {
+    await document.fonts.load(font(Math.round(W * 0.042)), name);
+  } catch (e) {}
+
+  // Fit the text: one line if it fits, else two lines split near the middle
+  const maxText = (P.maxWidth - 0.08) * W;
+  let size = W * 0.042;
+  let lines = [name];
+  ctx.save();
+  ctx.font = font(size);
+  const widest = list => Math.max(...list.map(l => ctx.measureText(l).width));
+  if (widest(lines) > maxText) {
+    const words = name.split(" ");
+    let best = null;
+    for (let i = 1; i < words.length; i++) {
+      const two = [words.slice(0, i).join(" "), words.slice(i).join(" ")];
+      const w = widest(two);
+      if (!best || w < best.w) best = { lines: two, w };
+    }
+    if (best) {
+      lines = best.lines;
+      size *= 0.92;
+      ctx.font = font(size);
+    }
+    if (widest(lines) > maxText) {
+      size = Math.max(W * 0.022, size * maxText / widest(lines));
+      ctx.font = font(size);
+    }
+  }
+  const textW = Math.min(maxText, widest(lines));
+  const lineH = size * 1.2;
+  const w = Math.max(0.24 * W, textW + 0.09 * W);
+  const h = lines.length * lineH + size * 0.7;
+
+  ctx.translate(P.x * W, P.y * H);
+  ctx.rotate(P.rotate * Math.PI / 180);
+
+  // A soft, slightly wobbly rounded plate, like it was drawn by hand
+  ctx.beginPath();
+  const steps = 96;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps * Math.PI * 2;
+    const c = Math.cos(t);
+    const s = Math.sin(t);
+    const wob = 1 + 0.01 * Math.sin(5 * t + 1) + 0.006 * Math.sin(11 * t + 2);
+    const x = Math.sign(c) * Math.pow(Math.abs(c), 2 / 7) * w / 2 * wob;
+    const y = Math.sign(s) * Math.pow(Math.abs(s), 2 / 7) * h / 2 * wob;
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  ctx.closePath();
+  ctx.shadowColor = "rgba(138, 74, 107, 0.28)";
+  ctx.shadowBlur = W * 0.01;
+  ctx.shadowOffsetY = W * 0.004;
+  ctx.fillStyle = "#fff7f3";
+  ctx.fill();
+  ctx.shadowColor = "transparent";
+  ctx.lineWidth = W * 0.0055;
+  ctx.strokeStyle = "#d89bb9";
+  ctx.stroke();
+
+  // two little pins holding it on
+  ctx.fillStyle = "#e9b3cc";
+  [-1, 1].forEach(side => {
+    ctx.beginPath();
+    ctx.arc(side * (w / 2 - W * 0.022), 0, W * 0.0065, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // the name, in the same plum as the label
+  ctx.fillStyle = "#8a4a6b";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  lines.forEach((line, i) => {
+    const y = (i - (lines.length - 1) / 2) * lineH + size * 0.06;
+    ctx.fillText(line, 0, y, maxText);
+  });
+  ctx.restore();
+};
+
+// The same plate as a page element: a canvas over the plate's area of the
+// globe, drawn by drawNameplate so it matches the saved picture exactly.
+Flurry.nameplateElement = function (name) {
+  const B = Flurry.NAMEPLATE.box;
+  const S = 2; // drawn at twice the artwork's size, sharp on Retina screens
+  const W = Flurry.GLOBE.width * S;
+  const H = Flurry.GLOBE.height * S;
+  const canvas = document.createElement("canvas");
+  canvas.className = "nameplate";
+  canvas.width = Math.round(B.width * W);
+  canvas.height = Math.round(B.height * H);
+  canvas.style.left = (B.left * 100) + "%";
+  canvas.style.top = (B.top * 100) + "%";
+  canvas.style.width = (B.width * 100) + "%";
+  canvas.style.height = (B.height * 100) + "%";
+  canvas.setAttribute("role", "img");
+  canvas.setAttribute("aria-label", "Name: " + name);
+  const ctx = canvas.getContext("2d");
+  ctx.translate(-B.left * W, -B.top * H);
+  canvas.ready = Flurry.drawNameplate(ctx, name, W, H);
   return canvas;
 };
 

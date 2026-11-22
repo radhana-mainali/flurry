@@ -3,7 +3,8 @@
 // New memories live in IndexedDB (database "flurry"):
 //   memories: { id, createdAt, thumb (PNG Blob), photos [3 JPEG Blobs],
 //               times [3 seconds], rotation, stickers, date,
-//               hasVideo, videoType, duration }
+//               name (shown on the nameplate; missing on globes saved
+//               before names existed), hasVideo, videoType, duration }
 //   videos:   id -> original video Blob (kept separate so the shelf
 //             can list memories without loading any video)
 //

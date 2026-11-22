@@ -17,10 +17,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Crafty+Girls&family=Kranky&display=swap"
         rel="stylesheet">
 
+  <link rel="icon" type="image/png" href="./images/favicon.png">
   <link rel="stylesheet" href="./style.css">
 </head>
 
-<body>
+<body class="shelf-body">
+  <!-- The cosy room behind the shelf: the team's drawing, a fire in the
+       fireplace and snow falling past the window -->
+  <div class="room" aria-hidden="true">
+    <!-- night sky + snow, seen through the drawing's see-through window -->
+    <canvas class="room-snow"></canvas>
+    <img src="./images/background.png" alt="" class="room-bg">
+    <div class="room-glow"></div>
+    <img src="./images/fire.gif" alt="" class="room-fire">
+  </div>
+
   <main class="shelf-page">
 
     <!-- Custom My Shelf title image -->
@@ -91,6 +102,7 @@
   <script src="./js/flurry-store.js"></script>
   <script src="./js/flurry-shake.js"></script>
   <script src="./js/flurry-music.js"></script>
+  <script src="./js/shelf-room.js"></script>
   <script src="./js/shelf.js"></script>
 </body>
 </html>

@@ -8,6 +8,8 @@
 // - While a snow globe replays a video with sound, the music fades out,
 //   and fades back in afterwards (only if it was on).
 // - It carries on from the same spot when you move between pages.
+// - Other sounds can follow the same button with Flurry.music.onChange
+//   (the fire crackle on My Shelf does).
 //
 // The track is audio/flurry-lofi.m4a, an original loop made for Flurry.
 // To use a different song, replace that file (or change MUSIC_SRC) with
@@ -31,6 +33,18 @@ Flurry.music = (() => {
   let fadeTimer = null;
   let button = null;
   let label = null;
+  const listeners = [];
+
+  // Tell anything following the button whether sound should be on now
+  function notify() {
+    const on = wanted && !ducked;
+    listeners.forEach(fn => fn(on));
+  }
+
+  function onChange(fn) {
+    listeners.push(fn);
+    fn(wanted && !ducked);
+  }
 
   function readPref() {
     try { return localStorage.getItem(PREF_KEY); } catch (e) { return null; }
@@ -118,6 +132,7 @@ Flurry.music = (() => {
     wanted = !wanted;
     savePref();
     render();
+    notify();
     if (wanted) play();
     else stop(400);
   }
@@ -126,6 +141,7 @@ Flurry.music = (() => {
   function duck(on) {
     if (on === ducked) return;
     ducked = on;
+    notify();
     if (ducked) {
       if (!audio.paused) stop(450);
     } else if (wanted) {
@@ -165,5 +181,5 @@ Flurry.music = (() => {
     mount();
   }
 
-  return { toggle, duck, get playing() { return !audio.paused; }, audio };
+  return { toggle, duck, onChange, get playing() { return !audio.paused; }, audio };
 })();

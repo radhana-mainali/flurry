@@ -525,6 +525,8 @@ function finishGlobe() {
   }
   renderDate();
 
+  showNameStep(false);
+
   if (videoUrl) URL.revokeObjectURL(videoUrl);
   videoUrl = URL.createObjectURL(currentFile);
   const picks = selected.map(i => candidates[i]);
@@ -549,6 +551,8 @@ back.onclick = async () => {
   const from = selected.map((_, k) => holeBox(k));
   stage.dataset.state = "choosing";
   stage_ = "choosing";
+  naming = false;
+  renderName();
   finalArea.hidden = true;
   stickerTray.hidden = true;
   selectionArea.hidden = false;
@@ -899,6 +903,65 @@ function renderDate() {
 dateOn.addEventListener("change", renderDate);
 dateText.addEventListener("input", renderDate);
 
+// ---------- naming the memory (the last step) ----------
+
+const decorateStep = document.getElementById("decorateStep");
+const nameStep = document.getElementById("nameStep");
+const memoryName = document.getElementById("memoryName");
+let naming = false;
+let plate = null;        // the nameplate canvas on the globe
+let plateToken = 0;
+
+function currentName() {
+  return Flurry.cleanName(memoryName.value) || Flurry.DEFAULT_NAME;
+}
+
+// The plate shows while naming, and stays once a name has been typed
+async function renderName() {
+  const token = ++plateToken;
+  const show = stage_ === "finished" && (naming || Flurry.cleanName(memoryName.value));
+  if (!show) {
+    if (plate) plate.remove();
+    plate = null;
+    return;
+  }
+  const el = Flurry.nameplateElement(currentName());
+  await el.ready;
+  if (token !== plateToken) return;   // typed again meanwhile
+  if (plate) plate.remove();
+  else el.classList.add("is-new");
+  plate = el;
+  globe.appendChild(el);
+}
+
+function showNameStep(on) {
+  naming = on;
+  selectSticker(null);
+  decorateStep.hidden = on;
+  nameStep.hidden = !on;
+  stickerTray.hidden = on;
+  layoutFloaters();
+  status.textContent = on
+    ? "Last step: give your snow globe a name!"
+    : "Your moments are frozen! Decorate your globe, then shake it";
+  renderName();
+  // (no automatic focus on phones, so the keyboard doesn't jump up)
+  if (on && matchMedia("(pointer: fine)").matches) memoryName.focus({ preventScroll: true });
+}
+
+document.getElementById("nameNext").onclick = () => {
+  shaker.stop();
+  showNameStep(true);
+};
+document.getElementById("backToDecorate").onclick = () => showNameStep(false);
+memoryName.addEventListener("input", renderName);
+memoryName.addEventListener("keydown", event => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    saveButton.click();
+  }
+});
+
 function clearDecorations() {
   stickers.forEach(s => s.el.remove());
   stickers = [];
@@ -906,22 +969,28 @@ function clearDecorations() {
   dateText.value = "";
   dateOn.checked = true;
   renderDate();
+  memoryName.value = "";
+  naming = false;
+  decorateStep.hidden = false;
+  nameStep.hidden = true;
+  renderName();
   globe.classList.remove("is-shakeable");
 }
 
-// Everything needed to draw this globe (photos, stickers, date)
+// Everything needed to draw this globe (photos, stickers, date, name)
 async function currentDesign() {
   const photos = await Promise.all(holes.map(h => h.decode().then(() => h)));
   return {
     photos,
     stickers: stickers.map(({ id, x, y, width, rotate }) => ({ id, x, y, width, rotate })),
-    date: { on: dateOn.checked, text: dateText.value.trim() }
+    date: { on: dateOn.checked, text: dateText.value.trim() },
+    name: currentName()
   };
 }
 
 // Save completed globe
 saveButton.onclick = async () => {
-  if (selected.length !== 3) return;
+  if (selected.length !== 3 || saveButton.disabled) return;
 
   saveButton.disabled = true;
   shaker.stop();
@@ -943,7 +1012,8 @@ saveButton.onclick = async () => {
       duration: videoDuration,
       rotation: Number(rotation.value),
       stickers: design.stickers,
-      date: design.date
+      date: design.date,
+      name: design.name
     };
 
     // a little pink glow while it's tucked away on the shelf
