@@ -383,7 +383,8 @@ const shaker = new Flurry.ShakeGlobe(globe, {
   onStateChange: state => {
     shakeButton.textContent = state.playing ? "Stop" : "Shake ❄️";
     soundButton.hidden = !state.canReplay;
-    soundButton.textContent = state.muted ? "sound off" : "sound on";
+    // The button says what clicking it will do
+    soundButton.textContent = state.muted ? "turn sound on" : "mute sound";
     soundButton.setAttribute("aria-pressed", String(state.muted));
   }
 });
@@ -397,7 +398,7 @@ shakeButton.onclick = () => {
   shaker.shake(1, Math.random() < 0.5 ? -1 : 1);
 };
 
-soundButton.onclick = () => shaker.setMuted(!shaker.muted);
+soundButton.onclick = () => shaker.toggleMuted();
 
 // ---------- stickers ----------
 

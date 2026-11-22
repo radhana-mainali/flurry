@@ -41,7 +41,8 @@ const shaker = new Flurry.ShakeGlobe(viewerGlobe, {
   onStateChange: state => {
     viewerShake.textContent = state.playing ? "Stop" : "Shake ❄️";
     viewerSound.hidden = !state.canReplay;
-    viewerSound.textContent = state.muted ? "sound off" : "sound on";
+    // The button says what clicking it will do
+    viewerSound.textContent = state.muted ? "turn sound on" : "mute sound";
     viewerSound.setAttribute("aria-pressed", String(state.muted));
   }
 });
@@ -166,7 +167,7 @@ viewerShake.onclick = () => {
   shaker.shake(1, Math.random() < 0.5 ? -1 : 1);
 };
 
-viewerSound.onclick = () => shaker.setMuted(!shaker.muted);
+viewerSound.onclick = () => shaker.toggleMuted();
 
 function displayShelf() {
   objectUrls.forEach(URL.revokeObjectURL);

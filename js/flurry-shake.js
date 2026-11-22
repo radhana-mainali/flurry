@@ -79,6 +79,12 @@ Flurry.ShakeGlobe = class {
     this.emit();
   }
 
+  // One click always flips what you actually hear (even if the browser
+  // had muted a clip on its own)
+  toggleMuted() {
+    this.setMuted(!(this.muted || this.video.muted));
+  }
+
   emit() {
     this.onStateChange({
       playing: this.playing,
