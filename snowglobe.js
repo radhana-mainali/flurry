@@ -9,3 +9,10 @@
 
 
 //get metadata from video to add place, time, date to the snowglobe in cute font
+
+
+
+
+
+
+
