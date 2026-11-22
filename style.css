@@ -397,7 +397,6 @@ select {
   font-size: 18px;
 }
 
-<<<<<<< Updated upstream
 /* BUTTON FONTS */
 button, input, select {
   font-family: 'Crafty Girls', cursive;
@@ -459,28 +458,19 @@ body {
 .shelf-button:hover {
     transform: scale(1.05);
     background-color: #cce7f7;
-=======
-
-/* CUSTOM CURSORS */
-
-/* Regular cursor */
-body {
-  cursor: url('./images/wand.png') 0 0, auto;
 }
 
-/* Hovering over clickable elements */
-button,
-a,
-select,
-input,
-label,
-.globe-click,
-#gallery .photo {
-  cursor: url('./images/mitten.png') 0 0, pointer;
-}
+/* SHELF PAGE */
 
-/* Disabled buttons */
-button:disabled {
-  cursor: url('./images/wand.png') 0 0, auto;
->>>>>>> Stashed changes
+#snowglobeShelf {
+    width: 100%;
+    min-height: 500px;
+    max-width: none;
+
+    background-image: url("./images/shelf.png");
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-size: 100% auto;
+
+    position: relative;
 }
