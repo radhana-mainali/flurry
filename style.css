@@ -11,10 +11,16 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-
-  background-color: #c9e2ff;
-  font-family: 'Crafty Girls', cursive;
   text-align: center;
+  font-family: 'Crafty Girls', cursive;
+
+  background: linear-gradient(
+    to bottom,
+    #c7cfff 0%,
+    #ffffff 100%
+  );
+
+  background-attachment: fixed;
 }
 
 main {
@@ -190,10 +196,11 @@ main {
 
 /* Upper left hole */
 .hole1 {
-  left: 9.04%;
-  top: 11.24%;
-  width: 43.98%;
-  height: 38.08%;
+  left: 11%;
+  top: 13%;
+  width: 40%;
+  height: 35%;
+  transform: rotate(-17deg);
 }
 
 /* Upper right hole */
@@ -202,6 +209,8 @@ main {
   top: 28.1%;
   width: 36.5%;
   height: 31.5%;
+  transform: rotate(15deg);
+  transform-origin: center;
 }
 
 /* Lower center hole */
@@ -210,6 +219,8 @@ main {
   top: 50.36%;
   width: 21.56%;
   height: 18.63%;
+  transform: rotate(-7deg);
+  transform-origin: center;
 }
 
 /* Invisible clickable area */
@@ -228,4 +239,16 @@ main {
 .globe:hover {
   transform: scale(1.02);
   transition: transform 0.2s;
+}
+
+
+/* Keep photos inside the snowglobe area */
+.globe {
+  overflow: hidden;
+}
+
+/* Crop the photos to their rectangular frames */
+.globe-photo {
+  object-fit: cover;
+  clip-path: inset(0 round 3%);
 }

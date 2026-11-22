@@ -391,8 +391,7 @@
 
       updateSelection();
     }
-
-    // Select or deselect an image
+    
     function toggleFrame(index) {
       if (selected.includes(index)) {
         selected = selected.filter(i => i !== index);
@@ -400,9 +399,29 @@
         if (selected.length >= 3) return;
         selected.push(index);
       }
-
+    
       updateSelection();
+      updateGlobe();
     }
+    
+    function updateGlobe() {
+      const holes = [
+        document.getElementById("hole1"),
+        document.getElementById("hole2"),
+        document.getElementById("hole3")
+      ];
+    
+      holes.forEach((hole, i) => {
+        if (i < selected.length) {
+          hole.src = candidates[selected[i]].image;
+          hole.style.display = "block";
+        } else {
+          hole.removeAttribute("src");
+          hole.style.display = "none";
+        }
+      });
+    }
+
 
     // Update selected image borders
     function updateSelection() {
