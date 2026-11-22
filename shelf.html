@@ -3,35 +3,71 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
   <title>My Shelf - Flurry</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Crafty+Girls&family=Kranky&display=swap" rel="stylesheet">
+  <link rel="preconnect"
+        href="https://fonts.googleapis.com">
+
+  <link rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Crafty+Girls&family=Kranky&display=swap"
+        rel="stylesheet">
 
   <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
-  <main>
-    <h1>My Shelf ❄️</h1>
+  <main class="shelf-page">
 
-    <a href="./index.html" class="shelf-button">
-      Back to Flurry
-    </a>
+    <!-- Custom My Shelf title image -->
+    <img
+      src="./images/myshelf.png"
+      alt="My Shelf"
+      class="shelf-title"
+    >
 
-    <!-- Shelf background with saved snow globes -->
-    <div class="shelf-container">
-      <div class="shelf-items" id="shelfItems"></div>
+    <div class="shelf-actions">
+      <a href="./index.html" class="shelf-button">
+        Back to Flurry ❄️
+      </a>
+
+      <button id="resetShelf" class="shelf-button">
+        Reset Shelf
+      </button>
+    </div>
+
+    <!-- Shelf artwork -->
+    <div class="shelf-stage">
+
+      <img
+        src="./images/shelf.png"
+        alt="Wooden shelves"
+        class="shelf-art"
+      >
+
+      <!-- Up to 3 globes per shelf -->
+      <div id="shelfRow1" class="shelf-row row-1"></div>
+      <div id="shelfRow2" class="shelf-row row-2"></div>
+      <div id="shelfRow3" class="shelf-row row-3"></div>
+
     </div>
 
     <p id="emptyMessage" hidden>
-      No memories yet! Create your first snow globe.
+      Your shelf is empty! Create your first snow globe.
     </p>
+
+    <p id="fullMessage" hidden>
+      Your shelf is full! ❄️
+    </p>
+
   </main>
 
-  <!-- Clicked snow globe appears larger -->
+  <!-- Enlarged memory -->
   <div id="memoryViewer" class="memory-viewer" hidden>
     <button id="closeViewer">Close ✕</button>
 
@@ -41,79 +77,113 @@
   </div>
 
   <script>
-    const shelfItems = document.getElementById("shelfItems");
+    const rows = [
+      document.getElementById("shelfRow1"),
+      document.getElementById("shelfRow2"),
+      document.getElementById("shelfRow3")
+    ];
+
     const viewer = document.getElementById("memoryViewer");
     const largeGlobe = document.getElementById("largeGlobe");
     const memoryDate = document.getElementById("memoryDate");
 
-    // Read saved memories
     let memories = [];
 
-    try {
-      memories = JSON.parse(
-        localStorage.getItem("flurryMemories") || "[]"
-      );
-    } catch (error) {
-      console.error("Could not load memories:", error);
-    }
+    function loadMemories() {
+      try {
+        memories = JSON.parse(
+          localStorage.getItem("flurryMemories") || "[]"
+        );
 
-    if (memories.length === 0) {
-      document.getElementById("emptyMessage").hidden = false;
-    }
-
-    // Add each saved snow globe to the shelf
-    memories.forEach(memory => {
-      const img = document.createElement("img");
-
-      img.src = memory.image;
-      img.alt = "Saved snow globe";
-      img.className = "saved-globe";
-      img.tabIndex = 0;
-      img.setAttribute("role", "button");
-
-      function openMemory() {
-        largeGlobe.src = memory.image;
-
-        memoryDate.textContent = memory.createdAt
-          ? new Date(memory.createdAt).toLocaleDateString()
-          : "";
-
-        viewer.hidden = false;
-      }
-
-      img.onclick = openMemory;
-
-      img.onkeydown = event => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          openMemory();
+        if (!Array.isArray(memories)) {
+          memories = [];
         }
-      };
-
-      shelfItems.appendChild(img);
-    });
-
-    // Close enlarged memory
-    function closeMemory() {
-      viewer.hidden = true;
+      } catch (error) {
+        console.error(error);
+        memories = [];
+      }
     }
 
-    document.getElementById("closeViewer").onclick =
-      closeMemory;
+    function openMemory(memory) {
+      largeGlobe.src = memory.image;
 
-    // Click outside the globe to close
+      memoryDate.textContent = memory.createdAt
+        ? new Date(memory.createdAt).toLocaleDateString()
+        : "";
+
+      viewer.hidden = false;
+    }
+
+    function displayShelf() {
+      // Clear all rows before updating
+      rows.forEach(row => row.innerHTML = "");
+
+      document.getElementById("emptyMessage").hidden =
+        memories.length !== 0;
+
+      document.getElementById("fullMessage").hidden =
+        memories.length <= 9;
+
+      memories.slice(0, 9).forEach((memory, index) => {
+        // 0,1,2 -> first shelf
+        // 3,4,5 -> second shelf
+        // 6,7,8 -> third shelf
+        const rowIndex = Math.floor(index / 3);
+
+        const img = document.createElement("img");
+        img.src = memory.image;
+        img.alt = "Saved snow globe " + (index + 1);
+        img.className = "saved-globe";
+        img.tabIndex = 0;
+        img.setAttribute("role", "button");
+
+        img.onclick = () => openMemory(memory);
+
+        img.onkeydown = event => {
+          if (event.key === "Enter" ||
+              event.key === " ") {
+            event.preventDefault();
+            openMemory(memory);
+          }
+        };
+
+        rows[rowIndex].appendChild(img);
+      });
+    }
+
+    // Reset all saved snow globes
+    document.getElementById("resetShelf").onclick = () => {
+      const confirmed = confirm(
+        "Delete all saved snow globes? This cannot be undone."
+      );
+
+      if (!confirmed) return;
+
+      localStorage.removeItem("flurryMemories");
+
+      memories = [];
+      viewer.hidden = true;
+      displayShelf();
+    };
+
+    document.getElementById("closeViewer").onclick = () => {
+      viewer.hidden = true;
+    };
+
     viewer.onclick = event => {
       if (event.target === viewer) {
-        closeMemory();
+        viewer.hidden = true;
       }
     };
 
-    // Escape key also closes it
     document.addEventListener("keydown", event => {
       if (event.key === "Escape") {
-        closeMemory();
+        viewer.hidden = true;
       }
     });
+
+    loadMemories();
+    displayShelf();
   </script>
 </body>
 </html>
