@@ -196,12 +196,11 @@ main {
 
 /* Upper left hole */
 .hole1 {
-  left: 9.04%;
-  top: 11.24%;
-  width: 43.98%;
-  height: 38.08%;
+  left: 11%;
+  top: 13%;
+  width: 40%;
+  height: 35%;
   transform: rotate(-17deg);
-  transform-origin: center;
 }
 
 /* Upper right hole */
