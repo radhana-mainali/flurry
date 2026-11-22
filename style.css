@@ -26,3 +26,10 @@ body {
     min-height: 100vh;
     background-color: rgb(219, 222, 255);
 }
+
+.site-title {
+    width: 300px;
+    height: auto;
+    display: block;
+    margin: 20px auto;
+}
