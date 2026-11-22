@@ -384,3 +384,16 @@ body:has(#selectionArea:not([hidden])) .globe {
     transition: none;
   }
 }
+button, input, select {
+    font-family: 'Crafty Girls', cursive;
+}
+
+input[type="file"],
+select {
+    font-family: 'Crafty Girls', cursive;
+    font-size: 18px;
+}
+
+body {
+    cursor: pointer;
+}
