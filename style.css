@@ -4,18 +4,18 @@
 @font-face {
   font-family: 'TypewriterInked';
   src: url('./fonts/TypewriterInked.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
 }
 
 .kranky-regular {
-  font-family: "Kranky", serif;
-  font-weight: 400;
-  font-style: normal;
+  font-family: 'Kranky', serif;
 }
 
 
-/* PAGE BACKGROUND */
+/* GENERAL PAGE */
+
+* {
+  box-sizing: border-box;
+}
 
 html {
   min-height: 100%;
@@ -25,6 +25,7 @@ body {
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
+
   display: flex;
   flex-direction: column;
 
@@ -38,19 +39,16 @@ body {
   );
 
   background-attachment: fixed;
+
+  cursor: url('./images/wand.png') 0 0, auto;
 }
-
-
-/* MAIN LAYOUT */
 
 main {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-
   padding: 10px 20px;
-  box-sizing: border-box;
 }
 
 [hidden] {
@@ -58,33 +56,68 @@ main {
 }
 
 
-/* FLURRY TITLE */
+/* CUSTOM CURSORS */
+
+button, a, select, input, label,
+.globe-click, #gallery .photo,
+.saved-globe {
+  cursor: url('./images/mitten.png') 0 0, pointer;
+}
+
+button, input, select {
+  font-family: 'Crafty Girls', cursive;
+}
+
+
+/* FLURRY LOGO */
 
 .site-title {
   width: 300px;
   max-width: 80vw;
   height: auto;
-
   display: block;
   margin: 5px auto;
 }
-
-/* Tagline */
 
 main > p:first-of-type {
   margin: 4px 0 10px;
 }
 
 
-/* SNOW GLOBE CONTAINER */
+/* MY SHELF NAVIGATION BUTTON */
+
+.shelf-button {
+  display: inline-block;
+  padding: 10px 20px;
+  margin: 5px auto;
+
+  background-color: #b8d9ee;
+  color: #4b6478;
+
+  border: 2px solid white;
+  border-radius: 20px;
+
+  font-family: 'Crafty Girls', cursive;
+  text-decoration: none;
+  font-size: 16px;
+
+  transition: transform 0.2s ease;
+}
+
+.shelf-button:hover {
+  transform: scale(1.05);
+  background-color: #cce7f7;
+}
+
+
+/* SNOW GLOBE */
 
 .globe {
   position: relative;
-
   width: min(55vh, 480px, 85vw);
   aspect-ratio: 830 / 961;
-
   margin: 5px auto;
+
   overflow: hidden;
   flex-shrink: 0;
 
@@ -95,12 +128,10 @@ main > p:first-of-type {
   transform: scale(1.02);
 }
 
-
-/* SNOW GLOBE ARTWORK */
+/* Original snowglobe image */
 
 .globe-art {
   position: absolute;
-
   width: 246.75%;
   height: auto;
   max-width: none;
@@ -112,8 +143,7 @@ main > p:first-of-type {
   pointer-events: none;
 }
 
-
-/* PHOTOS INSIDE THE GLOBE */
+/* Images behind transparent holes */
 
 .globe-photo {
   position: absolute;
@@ -122,12 +152,11 @@ main > p:first-of-type {
   z-index: 1;
 }
 
-/* Upper-left photo */
+/* Upper-left hole */
 
 .hole1 {
   left: 11%;
   top: 13%;
-
   width: 40%;
   height: 35%;
 
@@ -135,12 +164,11 @@ main > p:first-of-type {
   transform-origin: center;
 }
 
-/* Upper-right photo */
+/* Upper-right hole */
 
 .hole2 {
   left: 51.2%;
   top: 28.1%;
-
   width: 36.5%;
   height: 31.5%;
 
@@ -148,12 +176,11 @@ main > p:first-of-type {
   transform-origin: center;
 }
 
-/* Lower-center photo */
+/* Bottom hole */
 
 .hole3 {
   left: 25.9%;
   top: 50.36%;
-
   width: 21.56%;
   height: 18.63%;
 
@@ -161,13 +188,11 @@ main > p:first-of-type {
   transform-origin: center;
 }
 
-
-/* CLICKABLE SNOW GLOBE */
+/* Clickable globe overlay */
 
 .globe-click {
   position: absolute;
   inset: 0;
-
   width: 100%;
   height: 100%;
 
@@ -175,7 +200,6 @@ main > p:first-of-type {
   border: none;
   background: transparent;
 
-  cursor: pointer;
   z-index: 3;
 }
 
@@ -186,11 +210,9 @@ main > p:first-of-type {
   display: none;
 }
 
-
-/* ROTATION CONTROLS */
-
 #rotation {
   margin: 5px;
+  font-size: 16px;
 }
 
 #status {
@@ -198,7 +220,7 @@ main > p:first-of-type {
 }
 
 
-/* PHOTO SELECTION AREA */
+/* PHOTO SELECTION */
 
 #selectionArea {
   width: 100%;
@@ -215,35 +237,24 @@ main > p:first-of-type {
   margin: 4px 0;
 }
 
-
-/* TEN CANDIDATE PHOTOS */
-
 #gallery {
   display: grid;
-
   grid-template-columns: repeat(5, minmax(0, 1fr));
-
   gap: 5px;
 
   width: 100%;
   max-width: 650px;
-
   margin: 5px auto;
 }
 
 #gallery .photo {
   width: 100%;
-  height: auto;
   aspect-ratio: 1;
-
-  box-sizing: border-box;
   object-fit: cover;
 
   margin: 0;
   border: 3px solid transparent;
   border-radius: 8px;
-
-  cursor: pointer;
 }
 
 #gallery .photo.selected {
@@ -251,14 +262,18 @@ main > p:first-of-type {
 }
 
 
-/* DONE BUTTON */
+/* ACTION BUTTONS */
 
-#done,
-#back {
+#done, #back, #saveSnowglobe {
   padding: 8px 18px;
   margin: 8px;
 
-  cursor: pointer;
+  border: 2px solid white;
+  border-radius: 12px;
+  background: #b8d9ee;
+  color: #4b6478;
+
+  font-size: 15px;
 }
 
 #done:disabled {
@@ -267,7 +282,7 @@ main > p:first-of-type {
 }
 
 
-/* FINAL AREA */
+/* FINAL SELECTION */
 
 #finalArea {
   width: 100%;
@@ -283,13 +298,11 @@ main > p:first-of-type {
 #finalFrames img {
   width: 180px;
   height: 180px;
-
   object-fit: cover;
   border-radius: 8px;
 }
 
-
-/* SMALLER GLOBE DURING PHOTO SELECTION */
+/* Shrink globe while picking photos */
 
 body:has(#selectionArea:not([hidden])) .globe {
   width: min(33vh, 290px, 65vw);
@@ -304,7 +317,6 @@ body:has(#selectionArea:not([hidden])) .globe {
 
   background: white;
   border-radius: 50%;
-
   pointer-events: none;
   z-index: 100;
 
@@ -319,6 +331,88 @@ body:has(#selectionArea:not([hidden])) .globe {
   to {
     transform: translateY(110vh);
   }
+}
+
+
+/* ==================================
+   MY SHELF PAGE
+   ================================== */
+
+/* Shelf illustration displays only once,
+   without stretching or cropping. */
+
+.shelf-container {
+  position: relative;
+
+  width: min(1100px, 95vw);
+  height: min(55vw, 600px);
+  min-height: 300px;
+
+  margin: 20px auto;
+
+  background-image: url('./images/shelf.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/* Miniature saved snowglobes */
+
+.shelf-items {
+  position: absolute;
+
+  left: 12%;
+  right: 12%;
+  bottom: 14%;
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.saved-globe {
+  width: 140px;
+  max-width: 22%;
+  height: auto;
+
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+.saved-globe:hover {
+  transform: scale(1.1);
+}
+
+/* Full-screen memory viewer */
+
+.memory-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(60, 55, 110, 0.8);
+}
+
+.memory-viewer img {
+  width: min(550px, 85vw);
+  max-height: 75vh;
+  object-fit: contain;
+}
+
+.memory-viewer button {
+  padding: 10px 20px;
+  margin: 15px;
+
+  background: #b8d9ee;
+  border: 2px solid white;
+  border-radius: 12px;
 }
 
 
@@ -366,8 +460,19 @@ body:has(#selectionArea:not([hidden])) .globe {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  #selectionArea h2 {
-    font-size: 16px;
+  .shelf-container {
+    width: 96vw;
+    height: 350px;
+    min-height: 0;
+  }
+
+  .shelf-items {
+    gap: 8px;
+  }
+
+  .saved-globe {
+    width: 80px;
+    max-width: 25%;
   }
 }
 
@@ -380,97 +485,8 @@ body:has(#selectionArea:not([hidden])) .globe {
     animation: none;
   }
 
-  .globe {
+  .globe,
+  .saved-globe {
     transition: none;
   }
-}
-
-
-/* BUTTON FONTS */
-
-button, input, select {
-  font-family: 'Crafty Girls', cursive;
-}
-
-input[type="file"],
-select {
-  font-size: 18px;
-}
-
-/* BUTTON FONTS */
-button, input, select {
-  font-family: 'Crafty Girls', cursive;
-}
-
-input[type="file"], select {
-  font-size: 18px;
-}
-
-/* CUSTOM CURSORS */
-body {
-    cursor: url('./images/wand.png') 0 0, auto;
-}
-
-button, a, select, input, label, .globe-click, #gallery .photo {
-  cursor: url('./images/mitten.png') 0 0, pointer;
-}
-
-button:disabled {
-  cursor: url('./images/wand.png') 0 0, auto;
-}
-
-body {
-    background-color: #dceefa; /* Your existing background color */
-    margin: 0;
-    text-align: center;
-}
-
-/* Shelf area */
-.shelf-container {
-    width: 100%;
-    min-height: 500px;
-
-    background-image: url("./images/shelf.png");
-    background-repeat: no-repeat;
-    background-position: center bottom;
-    background-size: contain;
-
-    position: relative;
-}
-
-.shelf-button {
-    display: inline-block;
-    padding: 10px 20px;
-
-    background-color: #b8d9ee;
-    color: #4b6478;
-
-    border: 2px solid #ffffff;
-    border-radius: 20px;
-
-    font-family: 'Crafty Girls', cursive;
-    text-decoration: none;
-    font-size: 16px;
-
-    transition: transform 0.2s ease, background-color 0.2s ease;
-}
-
-.shelf-button:hover {
-    transform: scale(1.05);
-    background-color: #cce7f7;
-}
-
-/* SHELF PAGE */
-
-#snowglobeShelf {
-    width: 100%;
-    min-height: 500px;
-    max-width: none;
-
-    background-image: url("./images/shelf.png");
-    background-repeat: no-repeat;
-    background-position: center bottom;
-    background-size: 100% auto;
-
-    position: relative;
 }
