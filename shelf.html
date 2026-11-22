@@ -1,21 +1,119 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Shelf</title>
-    <link rel="stylesheet" href="./style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Shelf - Flurry</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crafty+Girls&family=Kranky&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
+  <main>
+    <h1>My Shelf ❄️</h1>
 
-    <h1>My Shelf</h1>
+    <a href="./index.html" class="shelf-button">
+      Back to Flurry
+    </a>
 
-    <div id="snowglobeShelf" class="shelf-container">
-        <!-- Saved snowglobes will appear here -->
+    <!-- Shelf background with saved snow globes -->
+    <div class="shelf-container">
+      <div class="shelf-items" id="shelfItems"></div>
     </div>
 
+    <p id="emptyMessage" hidden>
+      No memories yet! Create your first snow globe.
+    </p>
+  </main>
 
-    <script src="./shelf.js"></script>
+  <!-- Clicked snow globe appears larger -->
+  <div id="memoryViewer" class="memory-viewer" hidden>
+    <button id="closeViewer">Close ✕</button>
+
+    <img id="largeGlobe" alt="Saved snow globe">
+
+    <p id="memoryDate" style="color: white;"></p>
+  </div>
+
+  <script>
+    const shelfItems = document.getElementById("shelfItems");
+    const viewer = document.getElementById("memoryViewer");
+    const largeGlobe = document.getElementById("largeGlobe");
+    const memoryDate = document.getElementById("memoryDate");
+
+    // Read saved memories
+    let memories = [];
+
+    try {
+      memories = JSON.parse(
+        localStorage.getItem("flurryMemories") || "[]"
+      );
+    } catch (error) {
+      console.error("Could not load memories:", error);
+    }
+
+    if (memories.length === 0) {
+      document.getElementById("emptyMessage").hidden = false;
+    }
+
+    // Add each saved snow globe to the shelf
+    memories.forEach(memory => {
+      const img = document.createElement("img");
+
+      img.src = memory.image;
+      img.alt = "Saved snow globe";
+      img.className = "saved-globe";
+      img.tabIndex = 0;
+      img.setAttribute("role", "button");
+
+      function openMemory() {
+        largeGlobe.src = memory.image;
+
+        memoryDate.textContent = memory.createdAt
+          ? new Date(memory.createdAt).toLocaleDateString()
+          : "";
+
+        viewer.hidden = false;
+      }
+
+      img.onclick = openMemory;
+
+      img.onkeydown = event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openMemory();
+        }
+      };
+
+      shelfItems.appendChild(img);
+    });
+
+    // Close enlarged memory
+    function closeMemory() {
+      viewer.hidden = true;
+    }
+
+    document.getElementById("closeViewer").onclick =
+      closeMemory;
+
+    // Click outside the globe to close
+    viewer.onclick = event => {
+      if (event.target === viewer) {
+        closeMemory();
+      }
+    };
+
+    // Escape key also closes it
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        closeMemory();
+      }
+    });
+  </script>
 </body>
 </html>
