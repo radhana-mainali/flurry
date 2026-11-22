@@ -44,12 +44,26 @@
         alt="Snow globe"
       >
 
+      <!-- Video clip that plays inside a photo opening when shaken -->
+      <div class="globe-video">
+        <video playsinline preload="auto"></video>
+      </div>
+
+      <!-- Date stamp (tape + typewriter date) -->
+      <div id="dateLayer" class="date-layer"></div>
+
+      <!-- Snow that swirls inside the glass when shaken -->
+      <canvas class="globe-snow"></canvas>
+
       <!-- Click globe to upload -->
       <button
         id="snowglobeButton"
         class="globe-click"
         aria-label="Upload a video"
       ></button>
+
+      <!-- Stickers on top of the glass -->
+      <div id="stickerLayer" class="sticker-layer"></div>
 
     </div>
 
@@ -61,7 +75,7 @@
     >
 
     <!-- Rotation controls -->
-    <div class="rotation-controls">
+    <div class="rotation-controls" id="rotationControls">
       <label for="rotation">Rotate:</label>
 
       <select id="rotation">
@@ -86,18 +100,35 @@
 
     <!-- Completed snow globe actions -->
     <div id="finalArea" hidden>
-      <h2>Your frozen moments! ❄️</h2>
 
-      <button id="saveSnowglobe">
-        Save to My Shelf ❄️
-      </button>
+      <!-- Decorate: the team's hand-drawn stickers -->
+      <div class="decorate-row sticker-tray" id="stickerTray">
+        <span class="row-label">add a sticker:</span>
+      </div>
 
-      <button id="back">Choose Again</button>
+      <div class="decorate-row">
+        <label class="date-toggle">
+          <input type="checkbox" id="dateOn" checked>
+          date stamp
+        </label>
+        <input type="text" id="dateText" maxlength="20"
+               aria-label="Date stamp text" spellcheck="false">
+      </div>
+
+      <div class="decorate-row">
+        <button id="shakeButton" class="soft-button">Shake ❄️</button>
+        <button id="soundButton" class="soft-button" aria-pressed="false">sound on</button>
+        <button id="saveSnowglobe" class="soft-button">Save to My Shelf ❄️</button>
+        <button id="back" class="soft-button">Choose Again</button>
+      </div>
+
+      <p class="hint" id="shakeHint">psst... drag the globe side to side to shake it!</p>
     </div>
   </main>
 
   <script src="./js/flurry-globe.js"></script>
   <script src="./js/flurry-store.js"></script>
+  <script src="./js/flurry-shake.js"></script>
   <script src="./js/home.js"></script>
 </body>
 </html>

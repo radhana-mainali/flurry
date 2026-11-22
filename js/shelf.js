@@ -7,8 +7,11 @@ const rows = [
 ];
 
 const viewer = document.getElementById("memoryViewer");
-const largeGlobe = document.getElementById("largeGlobe");
+const viewerGlobe = document.getElementById("viewerGlobe");
 const memoryDate = document.getElementById("memoryDate");
+const replayNote = document.getElementById("replayNote");
+const viewerShake = document.getElementById("viewerShake");
+const viewerSound = document.getElementById("viewerSound");
 
 const pager = document.getElementById("shelfPager");
 const prevShelf = document.getElementById("prevShelf");
@@ -32,20 +35,138 @@ function pageCount() {
   return Math.max(1, Math.ceil(memories.length / PER_SHELF));
 }
 
-function openMemory(memory, src) {
-  largeGlobe.src = src;
-  memoryDate.textContent = memory.createdAt
-    ? new Date(memory.createdAt).toLocaleDateString(undefined, {
-        year: "numeric", month: "long", day: "numeric"
-      })
-    : "";
+// ---------- enlarged, shakeable globe ----------
+
+const shaker = new Flurry.ShakeGlobe(viewerGlobe, {
+  onStateChange: state => {
+    viewerShake.textContent = state.playing ? "Stop" : "Shake ❄️";
+    viewerSound.hidden = !state.canReplay;
+    viewerSound.textContent = state.muted ? "sound off" : "sound on";
+    viewerSound.setAttribute("aria-pressed", String(state.muted));
+  }
+});
+shaker.enabled = true;
+
+let viewerUrls = [];
+let openToken = 0;
+
+function viewerUrl(blob) {
+  const url = URL.createObjectURL(blob);
+  viewerUrls.push(url);
+  return url;
+}
+
+function addLayer(el) {
+  el.dataset.layer = "memory";
+  // memory layers go underneath the snow + video that ShakeGlobe owns
+  viewerGlobe.insertBefore(el, viewerGlobe.firstChild);
+}
+
+async function openMemory(memory, src) {
+  const token = ++openToken;
+  shaker.setMemory(null);
+  viewerGlobe.querySelectorAll("[data-layer]").forEach(el => el.remove());
+  viewerUrls.forEach(URL.revokeObjectURL);
+  viewerUrls = [];
+
+  const layers = [];
+
+  if (memory.legacy || !memory.photos) {
+    // Older saved globe: one flattened picture
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = "Saved snow globe";
+    img.className = "globe-art";
+    layers.push(img);
+  } else {
+    memory.photos.forEach((blob, i) => {
+      const img = document.createElement("img");
+      img.src = viewerUrl(blob);
+      img.alt = "";
+      img.className = "globe-photo hole" + (i + 1);
+      img.style.display = "block";
+      layers.push(img);
+    });
+
+    const art = document.createElement("img");
+    art.src = Flurry.GLOBE.art;
+    art.alt = "Snow globe";
+    art.className = "globe-art";
+    layers.push(art);
+
+    const dateLayer = document.createElement("div");
+    dateLayer.className = "date-layer";
+    if (memory.date && memory.date.on && memory.date.text) {
+      dateLayer.appendChild(Flurry.dateStampElement(memory.date));
+    }
+    layers.push(dateLayer);
+  }
+
+  // photos, art and date go below the video/snow layers
+  layers.reverse().forEach(addLayer);
+
+  if (memory.stickers && memory.stickers.length) {
+    const stickerLayer = document.createElement("div");
+    stickerLayer.className = "sticker-layer";
+    stickerLayer.dataset.layer = "memory";
+    memory.stickers.forEach(s => {
+      const el = Flurry.stickerElement(s);
+      el.style.pointerEvents = "none";
+      stickerLayer.appendChild(el);
+    });
+    viewerGlobe.appendChild(stickerLayer);
+  }
+
+  memoryDate.textContent = memory.date && memory.date.on && memory.date.text
+    ? memory.date.text
+    : memory.createdAt
+      ? new Date(memory.createdAt).toLocaleDateString(undefined, {
+          year: "numeric", month: "long", day: "numeric"
+        })
+      : "";
+
+  replayNote.hidden = true;
   viewer.hidden = false;
   document.getElementById("closeViewer").focus();
+
+  // Load the video for shake-to-replay
+  if (!memory.legacy && memory.hasVideo) {
+    try {
+      const blob = await Flurry.store.getVideo(memory.id);
+      if (token !== openToken) return;
+      if (blob) {
+        shaker.setMemory({
+          videoUrl: viewerUrl(blob),
+          times: memory.times,
+          duration: memory.duration,
+          rotation: memory.rotation || 0
+        });
+        return;
+      }
+    } catch (error) {
+      console.error("Could not load video:", error);
+    }
+  }
+  if (token === openToken) replayNote.hidden = false;
 }
 
 function closeMemory() {
+  if (viewer.hidden) return;
+  openToken++;
+  shaker.setMemory(null);
   viewer.hidden = true;
 }
+
+viewerShake.onclick = () => {
+  if (shaker.playing) {
+    shaker.stop();
+    return;
+  }
+  shaker.prime();
+  shaker.shake(1, Math.random() < 0.5 ? -1 : 1);
+};
+
+viewerSound.onclick = () => shaker.setMuted(!shaker.muted);
 
 function displayShelf() {
   objectUrls.forEach(URL.revokeObjectURL);

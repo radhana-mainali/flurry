@@ -71,16 +71,27 @@
   </main>
 
   <!-- Enlarged memory -->
-  <div id="memoryViewer" class="memory-viewer" hidden>
-    <button id="closeViewer">Close ✕</button>
+  <div id="memoryViewer" class="memory-viewer" hidden
+       role="dialog" aria-modal="true" aria-label="Snow globe">
+    <button id="closeViewer" class="soft-button">Close ✕</button>
 
-    <img id="largeGlobe" alt="Saved snow globe">
+    <!-- Live globe: photos, art, decorations, snow and video -->
+    <div id="viewerGlobe" class="globe viewer-globe is-shakeable"></div>
+
+    <div class="viewer-actions">
+      <button id="viewerShake" class="soft-button">Shake ❄️</button>
+      <button id="viewerSound" class="soft-button" aria-pressed="false">sound on</button>
+    </div>
 
     <p id="memoryDate" class="memory-date"></p>
+    <p id="replayNote" class="replay-note" hidden>
+      This globe is a still keepsake, so it has no video to replay.
+    </p>
   </div>
 
   <script src="./js/flurry-globe.js"></script>
   <script src="./js/flurry-store.js"></script>
+  <script src="./js/flurry-shake.js"></script>
   <script src="./js/shelf.js"></script>
 </body>
 </html>

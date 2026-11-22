@@ -28,6 +28,8 @@ let processing = false;
 let currentFile = null;
 let videoDuration = 0;
 let stage = "idle"; // idle | choosing | finished
+let videoUrl = null;     // kept for shake-to-replay before saving
+let recordedOn = null;   // recording date from the file, if believable
 
 const FRAME_SIZE = 1080; // max saved photo size in pixels
 
@@ -150,6 +152,10 @@ async function processVideo() {
   candidates = [];
   selected = [];
   currentFile = null;
+  recordedOn = null;
+  shaker.stop();
+  shaker.enabled = false;
+  clearDecorations();
 
   gallery.innerHTML = "";
   selectionArea.hidden = true;
@@ -245,6 +251,7 @@ async function processVideo() {
 
     currentFile = file;
     videoDuration = duration;
+    recordedOn = await Flurry.readRecordingDate(file);
 
     displayGallery();
     stage = "choosing";
@@ -328,31 +335,232 @@ function updateSelection() {
   done.disabled = selected.length !== 3;
 }
 
-// Finish selecting photos
+// Finish selecting photos -> decorate & shake
 done.onclick = () => {
   if (selected.length !== 3) return;
   updateGlobe();
   stage = "finished";
   selectionArea.hidden = true;
   finalArea.hidden = false;
-  status.textContent = "Your moments are frozen!";
+  globe.classList.add("is-shakeable");
+  status.textContent = "Your moments are frozen! Decorate your globe, then shake it ❄️";
+
+  if (!dateText.value) {
+    dateText.value = Flurry.formatStampDate(recordedOn || new Date());
+  }
+  renderDate();
+
+  if (videoUrl) URL.revokeObjectURL(videoUrl);
+  videoUrl = URL.createObjectURL(currentFile);
+  const picks = selected.map(i => candidates[i]);
+  shaker.setMemory({
+    videoUrl,
+    times: picks.map(p => p.time),
+    duration: videoDuration,
+    rotation: Number(rotation.value)
+  });
+  shaker.enabled = true;
 };
 
 // Go back to frame selection
 back.onclick = () => {
   stage = "choosing";
+  shaker.stop();
+  shaker.enabled = false;
+  globe.classList.remove("is-shakeable");
+  selectSticker(null);
   finalArea.hidden = true;
   selectionArea.hidden = false;
   status.textContent = "Pick your favorite 3!";
 };
+
+// ---------- shaking ----------
+
+const shakeButton = document.getElementById("shakeButton");
+const soundButton = document.getElementById("soundButton");
+
+const shaker = new Flurry.ShakeGlobe(globe, {
+  onStateChange: state => {
+    shakeButton.textContent = state.playing ? "Stop" : "Shake ❄️";
+    soundButton.hidden = !state.canReplay;
+    soundButton.textContent = state.muted ? "sound off" : "sound on";
+    soundButton.setAttribute("aria-pressed", String(state.muted));
+  }
+});
+
+shakeButton.onclick = () => {
+  if (shaker.playing) {
+    shaker.stop();
+    return;
+  }
+  shaker.prime();
+  shaker.shake(1, Math.random() < 0.5 ? -1 : 1);
+};
+
+soundButton.onclick = () => shaker.setMuted(!shaker.muted);
+
+// ---------- stickers ----------
+
+const stickerLayer = document.getElementById("stickerLayer");
+const stickerTray = document.getElementById("stickerTray");
+let stickers = [];        // { id, x, y, width, rotate, el }
+let activeSticker = null;
+
+Flurry.STICKERS.forEach(def => {
+  const button = document.createElement("button");
+  button.className = "sticker-choice";
+  button.title = "Add " + def.label.toLowerCase();
+  button.setAttribute("aria-label", "Add " + def.label.toLowerCase() + " sticker");
+  const img = document.createElement("img");
+  img.src = def.src;
+  img.alt = "";
+  button.appendChild(img);
+  button.onclick = () => addSticker(def);
+  stickerTray.appendChild(button);
+});
+
+function addSticker(def) {
+  if (stickers.length >= 12) return;
+  // Start at this sticker's spot; repeats of the same sticker shift a bit
+  const repeats = stickers.filter(x => x.id === def.id).length;
+  const s = {
+    id: def.id,
+    x: Math.min(0.9, Math.max(0.1, def.spot.x + repeats * 0.06 * (def.spot.x > 0.5 ? -1 : 1))),
+    y: Math.min(0.9, def.spot.y + repeats * 0.05),
+    width: def.width,
+    rotate: Math.round((Math.random() - 0.5) * 20)
+  };
+  s.el = Flurry.stickerElement(s);
+  s.el.tabIndex = 0;
+  stickerLayer.appendChild(s.el);
+  stickers.push(s);
+  makeDraggable(s);
+  selectSticker(s);
+}
+
+// Small "x" that appears on the chosen sticker
+const removeButton = document.createElement("button");
+removeButton.className = "sticker-remove";
+removeButton.textContent = "×";
+removeButton.setAttribute("aria-label", "Remove sticker");
+removeButton.hidden = true;
+stickerLayer.appendChild(removeButton);
+
+removeButton.addEventListener("pointerdown", event => event.stopPropagation());
+removeButton.onclick = event => {
+  event.stopPropagation();
+  removeSticker(activeSticker);
+};
+
+function removeSticker(s) {
+  if (!s) return;
+  s.el.remove();
+  stickers = stickers.filter(x => x !== s);
+  selectSticker(null);
+}
+
+function selectSticker(s) {
+  activeSticker = s;
+  stickers.forEach(x => x.el.classList.toggle("is-selected", x === s));
+  removeButton.hidden = !s;
+  if (s) positionRemoveButton();
+}
+
+function positionRemoveButton() {
+  const s = activeSticker;
+  const box = globe.getBoundingClientRect();
+  const h = s.el.offsetHeight / box.height;
+  removeButton.style.left = ((s.x + s.width / 2) * 100) + "%";
+  removeButton.style.top = ((s.y - h / 2) * 100) + "%";
+}
+
+function makeDraggable(s) {
+  let offsetX = 0;
+  let offsetY = 0;
+
+  s.el.addEventListener("pointerdown", event => {
+    event.stopPropagation(); // don't shake the globe while placing stickers
+    event.preventDefault();
+    selectSticker(s);
+    const box = globe.getBoundingClientRect();
+    offsetX = (event.clientX - box.left) / box.width - s.x;
+    offsetY = (event.clientY - box.top) / box.height - s.y;
+    s.el.setPointerCapture(event.pointerId);
+    s.el.classList.add("is-dragging");
+  });
+
+  s.el.addEventListener("pointermove", event => {
+    if (!s.el.hasPointerCapture(event.pointerId)) return;
+    const box = globe.getBoundingClientRect();
+    const halfW = s.width / 2;
+    const halfH = s.el.offsetHeight / box.height / 2;
+    // keep the whole sticker on the globe
+    s.x = Math.min(1 - halfW, Math.max(halfW, (event.clientX - box.left) / box.width - offsetX));
+    s.y = Math.min(1 - halfH, Math.max(halfH, (event.clientY - box.top) / box.height - offsetY));
+    Flurry.placeSticker(s.el, s);
+    positionRemoveButton();
+  });
+
+  const end = () => s.el.classList.remove("is-dragging");
+  s.el.addEventListener("pointerup", end);
+  s.el.addEventListener("pointercancel", end);
+
+  s.el.addEventListener("keydown", event => {
+    const step = 0.02;
+    if (event.key === "Delete" || event.key === "Backspace") removeSticker(s);
+    else if (event.key === "ArrowLeft") s.x = Math.max(s.width / 2, s.x - step);
+    else if (event.key === "ArrowRight") s.x = Math.min(1 - s.width / 2, s.x + step);
+    else if (event.key === "ArrowUp") s.y = Math.max(0.05, s.y - step);
+    else if (event.key === "ArrowDown") s.y = Math.min(0.95, s.y + step);
+    else return;
+    event.preventDefault();
+    if (stickers.includes(s)) {
+      Flurry.placeSticker(s.el, s);
+      positionRemoveButton();
+    }
+  });
+  s.el.addEventListener("focus", () => selectSticker(s));
+}
+
+// Clicking anywhere else deselects
+document.addEventListener("pointerdown", event => {
+  if (activeSticker && !stickerLayer.contains(event.target)) selectSticker(null);
+});
+
+// ---------- date stamp ----------
+
+const dateLayer = document.getElementById("dateLayer");
+const dateOn = document.getElementById("dateOn");
+const dateText = document.getElementById("dateText");
+
+function renderDate() {
+  dateLayer.innerHTML = "";
+  dateText.disabled = !dateOn.checked;
+  if (dateOn.checked && dateText.value.trim()) {
+    dateLayer.appendChild(Flurry.dateStampElement({ text: dateText.value.trim() }));
+  }
+}
+
+dateOn.addEventListener("change", renderDate);
+dateText.addEventListener("input", renderDate);
+
+function clearDecorations() {
+  stickers.forEach(s => s.el.remove());
+  stickers = [];
+  selectSticker(null);
+  dateText.value = "";
+  dateOn.checked = true;
+  renderDate();
+  globe.classList.remove("is-shakeable");
+}
 
 // Everything needed to draw this globe (photos, stickers, date)
 async function currentDesign() {
   const photos = await Promise.all(holes.map(h => h.decode().then(() => h)));
   return {
     photos,
-    stickers: [],
-    date: null
+    stickers: stickers.map(({ id, x, y, width, rotate }) => ({ id, x, y, width, rotate })),
+    date: { on: dateOn.checked, text: dateText.value.trim() }
   };
 }
 
@@ -361,6 +569,8 @@ saveButton.onclick = async () => {
   if (selected.length !== 3) return;
 
   saveButton.disabled = true;
+  shaker.stop();
+  selectSticker(null);
   status.textContent = "Saving your snow globe...";
 
   try {

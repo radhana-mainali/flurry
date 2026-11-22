@@ -141,6 +141,7 @@ select {
 
 .globe {
   position: relative;
+  container-type: inline-size;
 
   width: min(410px, 80vw, calc((100dvh - 290px) * 956 / 1107));
   min-width: 200px;
@@ -238,7 +239,7 @@ select {
   border: none;
   background: transparent;
 
-  z-index: 3;
+  z-index: 5;
 }
 
 
@@ -329,10 +330,10 @@ select {
 /* ACTION BUTTONS */
 
 #done,
-#back,
-#saveSnowglobe {
-  padding: 8px 18px;
-  margin: 6px;
+.soft-button,
+.memory-viewer .soft-button {
+  padding: 7px 16px;
+  margin: 4px;
 
   border: 2px solid white;
   border-radius: 12px;
@@ -343,9 +344,19 @@ select {
   font-size: 15px;
 }
 
-#done:disabled {
+#done:disabled,
+.soft-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.soft-button {
+  transition: transform 0.2s ease;
+}
+
+.soft-button:hover:not(:disabled) {
+  transform: scale(1.05) rotate(-1deg);
+  background: #cce7f7;
 }
 
 
@@ -355,15 +366,246 @@ select {
   width: 100%;
 }
 
-#finalArea h2 {
-  margin: 5px 0;
-  font-size: 18px;
+/* Decorating: rows of plain controls under the globe, no panels */
+.decorate-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 8px;
+  margin: 2px auto;
+}
+
+.row-label,
+.date-toggle {
+  font-size: 15px;
+  color: #4b6478;
+}
+
+.sticker-choice {
+  width: 46px;
+  height: 46px;
+  padding: 2px;
+  border: none;
+  background: none;
+  transition: transform 0.2s ease;
+}
+
+.sticker-choice img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* soft outline so the white snowflake shows on the pale background */
+  filter: drop-shadow(0 0 1px #8a93d6) drop-shadow(0 1px 1px rgba(75, 100, 120, 0.25));
+  pointer-events: none;
+}
+
+.sticker-choice:hover,
+.sticker-choice:focus-visible {
+  transform: scale(1.15) rotate(-6deg);
+  outline: none;
+}
+
+.date-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.date-toggle input {
+  accent-color: #f4a6c8;
+}
+
+#dateText {
+  width: 9.5em;
+  padding: 3px 8px;
+  border: none;
+  border-bottom: 2px dashed #f4a6c8;
+  background: transparent;
+  color: #8a4a6b;
+  font-family: 'TypewriterInked', 'Courier New', monospace;
+  font-size: 15px;
+  text-align: center;
+}
+
+#dateText:focus {
+  outline: none;
+  border-bottom-style: solid;
+}
+
+#dateText:disabled {
+  opacity: 0.4;
+}
+
+.hint {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #6f7fa0;
+}
+
+/* While decorating: rotation is already chosen, keep the globe on screen */
+body:has(#finalArea:not([hidden])) #rotationControls {
+  display: none;
+}
+
+body:has(#finalArea:not([hidden])) .globe {
+  width: min(410px, 80vw, calc((100dvh - 390px) * 956 / 1107));
 }
 
 /* Smaller globe while picking frames */
 
 body:has(#selectionArea:not([hidden])) .globe {
   width: min(27vh, 240px, 55vw);
+}
+
+
+/* GLOBE LAYERS: photos (1) < video (1) < art (2) < date (3) < snow (4)
+   < click-to-upload (5) < stickers (6) */
+
+.globe-video {
+  position: absolute;
+  z-index: 1;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s ease;
+  background: #c7cfff;
+}
+
+.globe-video.is-on {
+  opacity: 1;
+}
+
+.globe-video video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.date-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.date-stamp {
+  position: absolute;
+  aspect-ratio: 520 / 184;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: url('./images/stickers/tape.png') center / 100% 100% no-repeat;
+  opacity: 0.95;
+}
+
+.date-stamp span {
+  color: #8a4a6b;
+  font-family: 'TypewriterInked', 'Courier New', monospace;
+  /* 3.4% of the globe width, same as the saved image */
+  font-size: 3.4cqw;
+  white-space: nowrap;
+  padding-top: 2%;
+}
+
+.globe-snow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.globe-snow.is-on {
+  opacity: 1;
+}
+
+.sticker-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.globe-sticker {
+  position: absolute;
+  height: auto;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  filter: drop-shadow(0 2px 2px rgba(75, 70, 130, 0.18));
+}
+
+.sticker-layer .globe-sticker {
+  cursor: url('./images/cursors/mitten.png') 12 2, grab;
+}
+
+.globe-sticker.is-selected {
+  filter: drop-shadow(0 0 2px #ffffff) drop-shadow(0 0 3px #f4a6c8);
+}
+
+.globe-sticker:focus-visible {
+  outline: none;
+}
+
+.sticker-remove {
+  position: absolute;
+  z-index: 7;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  transform: translate(-50%, -50%);
+
+  border: 2px solid white;
+  border-radius: 50%;
+  background: #f4a6c8;
+  color: white;
+  font-size: 17px;
+  line-height: 20px;
+  pointer-events: auto;
+}
+
+/* Shaking */
+.globe.is-shakeable {
+  touch-action: none;
+}
+
+.globe.is-shakeable:hover {
+  transform: none;
+}
+
+.globe.is-wobbling {
+  animation: globe-wobble 0.9s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+.globe,
+.viewer-globe {
+  transform-origin: 50% 92%;
+}
+
+@keyframes globe-wobble {
+  0%   { transform: rotate(0deg); }
+  15%  { transform: rotate(-9deg); }
+  32%  { transform: rotate(8deg); }
+  50%  { transform: rotate(-5deg); }
+  68%  { transform: rotate(3deg); }
+  84%  { transform: rotate(-1deg); }
+  100% { transform: rotate(0deg); }
+}
+
+
+/* Wide but short screens: all 10 frames in one row so Done stays visible */
+@media (min-width: 900px) and (max-height: 960px) {
+  #selectionArea #gallery {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    max-width: 800px;
+  }
 }
 
 
@@ -550,24 +792,33 @@ body:has(#selectionArea:not([hidden])) .globe {
   background: rgba(60, 55, 110, 0.8);
 }
 
-.memory-viewer img {
-  width: min(480px, 85vw, calc((100dvh - 160px) * 956 / 1107));
-  height: auto;
+.memory-viewer .viewer-globe {
+  width: min(470px, 88vw, calc((100dvh - 210px) * 956 / 1107));
+  margin: 0 auto;
 }
 
-.memory-viewer button {
-  padding: 10px 20px;
-  margin: 15px;
-  border: 2px solid white;
-  border-radius: 12px;
-  background: #b8d9ee;
-  color: #4b6478;
+.memory-viewer #closeViewer {
+  margin: 0 0 8px;
+}
+
+.viewer-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 .memory-date {
-  margin: 10px 0 0;
+  margin: 6px 0 0;
   color: white;
+  font-family: 'TypewriterInked', 'Courier New', monospace;
   font-size: 17px;
+  letter-spacing: 1px;
+}
+
+.replay-note {
+  margin: 4px 16px 0;
+  color: #e6e9ff;
+  font-size: 14px;
 }
 
 /* Mobile */
@@ -648,5 +899,9 @@ body:has(#selectionArea:not([hidden])) .globe {
   .globe,
   .saved-globe {
     transition: none;
+  }
+
+  .globe.is-wobbling {
+    animation: none;
   }
 }
