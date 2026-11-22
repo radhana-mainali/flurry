@@ -28,13 +28,29 @@
     <p>Freeze your favorite moments.</p>
 
     <!-- Snowglobe button -->
-    <button id="snowglobeButton" class="snowglobe-button">
+    
+    <div class="globe" id="globe">
+    
+      <!-- Photos appear behind the globe -->
+      <img class="globe-photo hole1" id="hole1">
+      <img class="globe-photo hole2" id="hole2">
+      <img class="globe-photo hole3" id="hole3">
+    
+      <!-- Snow globe artwork sits on top -->
       <img
-        src="./images/snowglobe-empty.png"
-        alt="Upload a memory"
-        class="snowglobe-image"
+        src="./images/snowglobe-template.png"
+        class="globe-art"
+        alt="Snow globe"
       >
-    </button>
+    
+      <!-- Clicking globe opens video upload -->
+      <button
+        id="snowglobeButton"
+        class="globe-click"
+        aria-label="Upload a video"
+      ></button>
+    
+    </div>
 
     <!-- Video upload -->
     <input
